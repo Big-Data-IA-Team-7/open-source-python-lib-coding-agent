@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "open-source-python-lib-coding-agent"
+version = "0.1.0"
+description = "LLM Coding Agent using LangGraph"
+authors = ["Pragnesh Anekal <72695068+pragneshanekal@users.noreply.github.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+magika = "^0.5.1"
+gitpython = "^3.1.43"
+pandas = "^2.2.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
