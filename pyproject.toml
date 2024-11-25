@@ -11,6 +11,8 @@ python = ">=3.12,<3.13"
 magika = "^0.5.1"
 gitpython = "^3.1.43"
 pandas = "^2.2.3"
+requests = "^2.32.3"
+streamlit = "^1.40.2"
 
 
 [build-system]
