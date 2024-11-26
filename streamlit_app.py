@@ -2,6 +2,7 @@ import streamlit as st
 from auth.register import register_user
 from auth.login import login
 from auth.logout import logout
+from features.code_generation_page import safe_chat_interface 
 
 # Landing page function
 def landing_page():
@@ -34,13 +35,11 @@ def landing_page():
     col1, col2 = st.columns(2)
     
     with col1:
-        # Using emoji icons
         if st.button("➡️ **Login**", use_container_width=True):
             st.session_state.current_page = 'login'
             st.rerun()
     
     with col2:
-        # Using emoji icons
         if st.button("®️ **Register**", use_container_width=True):
             st.session_state.current_page = 'register'
             st.rerun()
@@ -53,27 +52,37 @@ if 'logged_in' not in st.session_state:
 if 'current_page' not in st.session_state:
     st.session_state.current_page = 'landing'
 
-# Define pages
-landing_page_nav = st.Page(landing_page, title='Landing', icon=':material/home:')
-login_page = st.Page(login, title='Login', icon=':material/login:')
-register_page = st.Page(register_user, title='Register', icon=':material/person_add:')
-logout_page = st.Page(logout, title='Logout', icon=':material/logout:')
-
-# Navigation logic
-if st.session_state.current_page == 'landing':
-    pg = st.navigation([landing_page_nav])
-elif st.session_state.logged_in:
-    pg = st.navigation({
-        "Account": [logout_page]
-    })
-elif st.session_state.current_page == 'register':
-    pg = st.navigation([register_page])
-else:
-    pg = st.navigation([login_page])
-
 # Set page configuration
-st.set_page_config(page_title='Open Source Code Agent', page_icon=':material/lock:')
+st.set_page_config(
+    page_title='Open Source Code Agent',
+    page_icon='🐍',
+    layout='wide'
+)
 
-# Run the selected page
-pg.run()
+# Navigation based on current page and login state
+if st.session_state.current_page == 'landing':
+    landing_page()
+elif st.session_state.current_page == 'login':
+    login()
+elif st.session_state.current_page == 'register':
+    register_user()
+elif st.session_state.logged_in and st.session_state.current_page == 'code_generation':
+    safe_chat_interface()
+elif st.session_state.current_page == 'logout':  # Handle logout page
+    logout()
+    if 'logged_in' not in st.session_state:  # After logout completes
+        st.session_state.current_page = 'landing'
+        st.rerun()
 
+# Show navigation sidebar for logged-in users
+if st.session_state.logged_in:
+    with st.sidebar:
+        st.title(f"Welcome, {st.session_state.get('user_name', 'User')}")
+        
+        if st.button("💬 Chat Interface"):
+            st.session_state.current_page = 'code_generation'
+            st.rerun()
+            
+        if st.button("🚪 Logout"):
+            st.session_state.current_page = 'logout'
+            st.rerun()

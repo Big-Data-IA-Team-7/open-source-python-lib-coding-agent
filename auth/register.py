@@ -2,6 +2,7 @@ import streamlit as st
 import requests 
 from dotenv import load_dotenv
 import os
+import time
 from requests.exceptions import RequestException
 from validate_fields import is_valid_username, is_valid_email, is_valid_password
 
@@ -74,24 +75,42 @@ def register_user():
                         st.error(error)
                     return
 
+                # Create placeholder for messages
+                message_placeholder = st.empty()
+                
                 # If validation passes, proceed with API call
                 try:
-                    payload = {
-                        "username": username,
-                        "email": email,
-                        "password": password
-                    }
-                    response = requests.post(
-                        f"{FAST_API_URL}/auth/register", 
-                        json=payload,
-                        timeout=10  # Add timeout to prevent hanging
-                    )
+                    # Show spinner during API call
+                    with message_placeholder, st.spinner('Registering user...'):
+                        payload = {
+                            "username": username,
+                            "email": email,
+                            "password": password
+                        }
+                        response = requests.post(
+                            f"{FAST_API_URL}/auth/register", 
+                            json=payload,
+                            timeout=10
+                        )
 
-                    if response.status_code == 200:
-                        st.success("User Registered Successfully")
-                        # Redirect to login page after successful registration
+                    # Clear spinner and show appropriate message
+                    message_placeholder.empty()
+
+                    if response.status_code == 201:
+                        # Show success message
+                        st.success("✅ Registration Successful!")
+                        
+                        # Show redirecting message with countdown
+                        countdown_placeholder = st.empty()
+                        for seconds in range(3, 0, -1):
+                            countdown_placeholder.info(f"Redirecting to login page in {seconds} seconds...")
+                            time.sleep(1)
+                        countdown_placeholder.empty()
+                        
+                        # Redirect to login
                         st.session_state.current_page = 'login'
                         st.rerun()
+                            
                     elif response.status_code == 400:
                         error_data = response.json()
                         error_message = error_data.get('detail', 'User Already Exists')

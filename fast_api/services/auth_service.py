@@ -6,7 +6,7 @@ import jwt
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime, timedelta, timezone
-from fast_api.models.user_models import fetch_user
+from fast_api.services.user_service import fetch_user
 from dotenv import load_dotenv
 
 # Load environment variables from .env file

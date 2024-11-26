@@ -4,6 +4,65 @@ from fast_api.config.db_connection import snowflake_connection, close_connection
 import pandas as pd
 from typing import Optional, Dict, Any
 
+def fetch_user_by_email(email: str) -> Optional[pd.DataFrame]:
+    """
+    Fetch user data from Snowflake using email address.
+    
+    Args:
+        email (str): Email address of the user to fetch
+        
+    Returns:
+        Optional[pd.DataFrame]: DataFrame containing user data if found, None otherwise
+        
+    Raises:
+        HTTPException: If database operation fails
+    """
+    conn = None
+    cursor = None
+    
+    try:
+        if not isinstance(email, str) or not email.strip():
+            raise ValueError("Invalid email provided")
+
+        conn = snowflake_connection()
+        cursor = conn.cursor()
+
+        select_query = """
+        SELECT *
+        FROM USERDETAILS
+        WHERE useremail = %s
+        """
+
+        cursor.execute(select_query, (email,))
+        columns = [col[0] for col in cursor.description]
+        user = cursor.fetchone()
+
+        if user:
+            user_df = pd.DataFrame([user], columns=columns)
+            return user_df
+        return None
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except snowflake.connector.errors.ProgrammingError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected error: {str(e)}"
+        )
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            close_connection(conn)
+
 def fetch_user(username: str) -> Optional[pd.DataFrame]:
     """
     Fetch user data from Snowflake.
@@ -90,19 +149,6 @@ def insert_user(username: str, email: str, password: str) -> Dict[str, Any]:
 
         conn = snowflake_connection()
         cursor = conn.cursor()
-
-        # Check if user already exists
-        check_query = """
-        SELECT COUNT(*)
-        FROM USERDETAILS
-        WHERE useremail = %s
-        """
-        cursor.execute(check_query, (email,))
-        if cursor.fetchone()[0] > 0:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="User with this email already exists"
-            )
 
         # Insert new user
         insert_query = """

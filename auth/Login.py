@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 from dotenv import load_dotenv
 import os
-import re
 from requests.exceptions import RequestException
 
 # Load environment variables from .env file
@@ -22,8 +21,6 @@ def login():
         st.header('Login')
 
         # Initialize session states
-        if 'logging_in' not in st.session_state:
-            st.session_state.logging_in = False
         if 'token' not in st.session_state:
             st.session_state.token = None
         if 'user_name' not in st.session_state:
@@ -49,18 +46,26 @@ def login():
                     for error in validation_errors:
                         st.error(error)
                     return
+                
+                # Create a placeholder for messages
+                message_placeholder = st.empty()
 
                 # If validation passes, proceed with API call
                 try:
-                    payload = {
-                        "username": username,  # Changed from useremail to username
-                        "password": password
-                    }
-                    response = requests.post(
-                        f"{FAST_API_URL}/auth/login", 
-                        json=payload,
-                        timeout=10  # Add timeout to prevent hanging
-                    )
+                    # Show spinner while making API request
+                    with message_placeholder, st.spinner('Logging in...'):
+                        payload = {
+                            "username": username,
+                            "password": password
+                        }
+                        response = requests.post(
+                            f"{FAST_API_URL}/auth/login", 
+                            json=payload,
+                            timeout=10
+                        )
+
+                    # Clear spinner
+                    message_placeholder.empty()
 
                     if response.status_code == 200:
                         try:
@@ -70,9 +75,13 @@ def login():
                             
                             if token and username:
                                 st.success("User Logged in Successfully")
-                                st.session_state.logging_in = True
                                 st.session_state.token = token
-                                st.session_state.User_name = username
+                                st.session_state.user_name = username
+                                # Set logged_in state to True
+                                st.session_state.logged_in = True
+                                # Navigate to code generation page
+                                st.session_state.current_page = 'code_generation'
+                                st.rerun()
                             else:
                                 st.error("Invalid response from server. Missing token or username.")
                                 

@@ -14,13 +14,12 @@ def logout() -> NoReturn:
             if key in st.session_state:
                 del st.session_state[key]
         
-        # Show success message
-        st.sidebar.success("Logged out successfully!")
-        
-        # Force page rerun to update UI
-        st.rerun()
-        
+        # Reset current page to landing
+        st.session_state.current_page = 'landing'
+            
     except Exception as e:
-        st.sidebar.error(f"Error during logout: {str(e)}")
-        # Still try to rerun even if there's an error
-        st.rerun()
+        st.error(f"Error during logout: {str(e)}")
+        
+        # Add a refresh button in case of error
+        if st.button("Refresh Page"):
+            st.rerun()

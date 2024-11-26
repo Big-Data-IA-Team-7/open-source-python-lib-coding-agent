@@ -1,6 +1,5 @@
-import streamlit_app as st
+import streamlit as st
 import traceback
-import sys
 
 def safe_chat_interface():
     try:
@@ -96,15 +95,3 @@ def safe_chat_interface():
         
         # Log the full traceback
         st.text_area("Error Traceback:", value=traceback.format_exc(), height=200)
-
-def main():
-    try:
-        safe_chat_interface()
-    except Exception as e:
-        st.error("An unexpected error occurred. Please refresh the page.")
-        st.error(f"Error: {str(e)}")
-        # Optional: log the full traceback
-        traceback.print_exc()
-
-if __name__ == "__main__":
-    main()
