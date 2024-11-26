@@ -1,55 +1,110 @@
 import snowflake.connector
-from fast_api.config.db_connection import snowflake_connection
+from fastapi import HTTPException, status
+from fast_api.config.db_connection import snowflake_connection, close_connection
 import pandas as pd
+from typing import Optional, Dict, Any
 
-
-def fetch_user(useremail:str):
-    """Fetch user data from Snowflake."""
+def fetch_user(username: str) -> Optional[pd.DataFrame]:
+    """
+    Fetch user data from Snowflake.
+    
+    Args:
+        username (str): Username of the user to fetch
+        
+    Returns:
+        Optional[pd.DataFrame]: DataFrame containing user data if found, None otherwise
+        
+    Raises:
+        HTTPException: If database operation fails
+    """
+    conn = None
+    cursor = None
     
     try:
-        # Connect to Snowflake using credentials from environment variables
-        conn = snowflake_connection()
+        if not isinstance(username, str) or not username.strip():
+            raise ValueError("Invalid username provided")
 
-        # Create a cursor object
+        conn = snowflake_connection()
         cursor = conn.cursor()
 
-        # Fetch the user data from Snowflake
         select_query = """
         SELECT *
         FROM USERDETAILS
-        WHERE useremail = %s
+        WHERE username = %s
         """
 
-        cursor.execute(select_query, (useremail,))
+        cursor.execute(select_query, (username,))
         columns = [col[0] for col in cursor.description]
-        
         user = cursor.fetchone()
 
         if user:
-            
-            # Store the fetched data into a pandas DataFrame
             user_df = pd.DataFrame([user], columns=columns)
             return user_df
-        else:
-            return None
-        
+        return None
 
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except snowflake.connector.errors.ProgrammingError as e:
-        print(f"Error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected error: {str(e)}"
+        )
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            close_connection(conn)
 
-def insert_user(username:str, email:str, password:str):
-    """Insert user data into Snowflake."""
+def insert_user(username: str, email: str, password: str) -> Dict[str, Any]:
+    """
+    Insert user data into Snowflake.
+    
+    Args:
+        username (str): Username for the new user
+        email (str): Email address for the new user
+        password (str): Hashed password for the new user
+        
+    Returns:
+        Dict[str, Any]: Success message and status
+        
+    Raises:
+        HTTPException: If insertion fails or validation fails
+    """
+    conn = None
+    cursor = None
+    
     try:
-        # Connect to Snowflake using credentials from environment variables
-        conn = snowflake_connection()
+        # Input validation
+        if not all(isinstance(x, str) for x in [username, email, password]):
+            raise ValueError("All inputs must be strings")
+        if not all(x.strip() for x in [username, email, password]):
+            raise ValueError("Empty values are not allowed")
 
-        # Create a cursor object
+        conn = snowflake_connection()
         cursor = conn.cursor()
 
-        # Insert the new user data into Snowflake
+        # Check if user already exists
+        check_query = """
+        SELECT COUNT(*)
+        FROM USERDETAILS
+        WHERE useremail = %s
+        """
+        cursor.execute(check_query, (email,))
+        if cursor.fetchone()[0] > 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User with this email already exists"
+            )
+
+        # Insert new user
         insert_query = """
         INSERT INTO USERDETAILS (username, useremail, userpassword)
         VALUES (%s, %s, %s)
@@ -58,10 +113,32 @@ def insert_user(username:str, email:str, password:str):
         cursor.execute(insert_query, (username, email, password))
         conn.commit()
 
-        print("User credentials inserted successfully!")
+        return {
+            "status": "success",
+            "message": "User registered successfully",
+            "username": username,
+            "email": email
+        }
 
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except snowflake.connector.errors.ProgrammingError as e:
-        print(f"Error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}"
+        )
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected error: {str(e)}"
+        )
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            close_connection(conn)
