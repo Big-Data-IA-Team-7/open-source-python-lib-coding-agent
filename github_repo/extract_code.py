@@ -25,6 +25,10 @@ def extract_python_structures(filepath):
         print(f"Syntax error in file {filepath}: {e}")
         return {}
     
+    # Convert filepath to Path object for consistent handling
+    filepath_obj = Path(filepath)
+    filename = filepath_obj.name
+    
     # Extract global statements
     global_statements = []
     for node in tree.body:
@@ -35,7 +39,8 @@ def extract_python_structures(filepath):
                 global_statements.append({
                     'code': statement_code,
                     'type': type(node).__name__,
-                    'filepath': str(filepath)
+                    'filepath': str(filepath),
+                    'filename': filename
                 })
         except Exception as e:
             print(f"Error extracting global statement in {filepath}: {e}")
@@ -50,6 +55,7 @@ def extract_python_structures(filepath):
                     'code': func_code,
                     'function_name': node.name,
                     'filepath': str(filepath),
+                    'filename': filename,
                     'class_name': None
                 })
             except Exception as e:
@@ -76,6 +82,7 @@ def extract_python_structures(filepath):
                             'code': method_code,
                             'function_name': item.name,
                             'filepath': str(filepath),
+                            'filename': filename,
                             'class_name': class_name
                         })
                     except Exception as e:
@@ -89,6 +96,7 @@ def extract_python_structures(filepath):
                     'code': class_code,
                     'class_name': class_name,
                     'filepath': str(filepath),
+                    'filename': filename,
                     'methods': class_methods
                 })
             except Exception as e:
