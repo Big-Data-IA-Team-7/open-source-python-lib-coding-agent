@@ -1,7 +1,7 @@
 import pandas as pd
 from pathlib import Path
-from python_processor import extract_python_structures
-from notebook_processor import extract_notebook_cells
+from processors.python_processor import extract_python_structures
+from processors.notebook_processor import extract_notebook_cells
 from typing import Dict, Optional, Union
 
 def extract_structures_from_repo(code_root: Union[str, Path]) -> Optional[Dict[str, pd.DataFrame]]:
