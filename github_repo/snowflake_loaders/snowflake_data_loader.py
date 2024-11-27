@@ -11,6 +11,37 @@ def create_tables(conn: snowflake.connector.SnowflakeConnection) -> None:
     
     try:
 
+        # Add new table for Markdown documents
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS GITHUB_MARKDOWN_DOCS (
+            doc_id NUMBER AUTOINCREMENT,
+            file_path VARCHAR(500),
+            file_name VARCHAR(255),
+            folder_name VARCHAR(255),
+            full_content TEXT,
+            total_sections INTEGER,
+            is_empty BOOLEAN,
+            has_valid_structure BOOLEAN,
+            created_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+            PRIMARY KEY (doc_id)
+        );
+        """)
+
+        # Create companion table for markdown sections
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS GITHUB_MARKDOWN_SECTIONS (
+            section_id NUMBER AUTOINCREMENT,
+            doc_id NUMBER,
+            header VARCHAR(500),
+            content TEXT,
+            header_level INTEGER,
+            section_order INTEGER,
+            created_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+            PRIMARY KEY (section_id),
+            FOREIGN KEY (doc_id) REFERENCES GITHUB_MARKDOWN_DOCS(doc_id)
+        );
+        """)
+
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS GITHUB_NOTEBOOK_CELLS (
             cell_id NUMBER AUTOINCREMENT,
@@ -65,6 +96,78 @@ def create_tables(conn: snowflake.connector.SnowflakeConnection) -> None:
             PRIMARY KEY (function_id)
         )
         """)
+        
+        conn.commit()
+    finally:
+        cursor.close()
+
+def insert_markdown_data(conn: snowflake.connector.SnowflakeConnection,
+                        markdown_docs_df: pd.DataFrame,
+                        batch_size: int = 1000) -> None:
+    """
+    Insert markdown documents and their sections into Snowflake
+    
+    Args:
+        conn: Snowflake connection
+        markdown_docs_df: DataFrame containing markdown documents data
+        batch_size: Number of records to insert in each batch
+    """
+    cursor = conn.cursor()
+    
+    try:
+        markdown_docs_data = []
+        markdown_sections_data = []
+        
+        for _, row in markdown_docs_df.iterrows():
+            # Insert main document data
+            cursor.execute("""
+            INSERT INTO GITHUB_MARKDOWN_DOCS (
+                file_path, file_name, folder_name, full_content,
+                total_sections, is_empty, has_valid_structure
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (
+                row['file_path'],
+                row['file_name'],
+                row['folder_name'],
+                row['full_content'],
+                row['total_sections'],
+                row['is_empty'],
+                row['has_valid_structure']
+            ))
+            
+            # Get the last inserted doc_id
+            cursor.execute("SELECT MAX(doc_id) FROM GITHUB_MARKDOWN_DOCS")
+            doc_id = cursor.fetchone()[0]
+            
+            # Insert section data
+            if not row['is_empty'] and 'sections' in row:
+                for section_idx, section in enumerate(row['sections']):
+                    markdown_sections_data.append((
+                        doc_id,
+                        section['header'],
+                        section['content'],
+                        section['header_level'],
+                        section_idx + 1  # section_order, 1-based
+                    ))
+                    
+                    if len(markdown_sections_data) >= batch_size:
+                        cursor.executemany("""
+                        INSERT INTO GITHUB_MARKDOWN_SECTIONS (
+                            doc_id, header, content, header_level, section_order
+                        )
+                        VALUES (%s, %s, %s, %s, %s)
+                        """, markdown_sections_data)
+                        markdown_sections_data = []
+        
+        # Insert any remaining sections
+        if markdown_sections_data:
+            cursor.executemany("""
+            INSERT INTO GITHUB_MARKDOWN_SECTIONS (
+                doc_id, header, content, header_level, section_order
+            )
+            VALUES (%s, %s, %s, %s, %s)
+            """, markdown_sections_data)
         
         conn.commit()
     finally:
@@ -264,6 +367,9 @@ def load_github_data_to_snowflake(data: Dict[str, pd.DataFrame]) -> None:
         
         if 'notebook_cells' in data:
             insert_notebook_cells_data(conn, data['notebook_cells'])
+        
+        if 'markdown_docs' in data:
+            insert_markdown_data(conn, data['markdown_docs'])
             
     except Exception as e:
         print(f"Error loading data to Snowflake: {str(e)}")
