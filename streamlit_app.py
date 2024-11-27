@@ -1,7 +1,7 @@
 import streamlit as st
 from auth.register import register_user
-from auth.login import login
-from auth.logout import logout
+from auth.Login import login
+from auth.Logout import logout
 from features.code_generation_page import safe_chat_interface 
 
 # Landing page function
