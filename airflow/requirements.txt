@@ -1,0 +1,9 @@
+openai
+pinecone-client
+langchain-openai
+langchain
+langchain-core
+bs4
+langchain-community
+langchain-pinecone
+boto3
