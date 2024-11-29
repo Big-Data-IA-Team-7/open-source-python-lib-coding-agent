@@ -175,3 +175,83 @@ def extract_notebook_cells(filepath: Path) -> List[Dict[str, Any]]:
         print(f"Warning: No code cells found in {filepath}")
         
     return processed_cells
+
+def extract_consolidated_notebook(filepath: Path) -> Dict[str, Any]:
+    """
+    Process a single .ipynb file, converting the entire notebook into HTML.
+    
+    Args:
+        filepath (Path): Path to the Jupyter notebook file
+        
+    Returns:
+        Dict[str, Any]: Dictionary containing consolidated notebook information with fields:
+            - file_path: path to the notebook
+            - file_name: name of the notebook file
+            - folder_name: name of the parent folder
+            - notebook_html: entire notebook content as HTML
+        
+    Raises:
+        FileNotFoundError: If the notebook file doesn't exist
+        json.JSONDecodeError: If the notebook is not valid JSON
+        UnicodeDecodeError: If the file encoding is not supported
+    """
+    if not filepath.exists():
+        error_msg = f"Notebook file not found: {filepath}"
+        print(f"Error: {error_msg}")
+        raise FileNotFoundError(error_msg)
+
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            try:
+                notebook_data = json.load(f)
+            except json.JSONDecodeError as e:
+                print(f"Error: Invalid notebook format in {filepath}: {e}")
+                raise
+    except UnicodeDecodeError as e:
+        print(f"Error: Encoding error in {filepath}: {e}")
+        raise
+    except Exception as e:
+        print(f"Error: Error reading notebook {filepath}: {e}")
+        raise
+
+    # Validate notebook structure
+    if not isinstance(notebook_data, dict) or 'cells' not in notebook_data:
+        error_msg = f"Invalid notebook structure in {filepath}: missing 'cells' key or incorrect format"
+        print(f"Error: {error_msg}")
+        return {}
+
+    # Build HTML content
+    html_content = []
+    html_content.append("<div class='notebook'>")
+
+    for cell in notebook_data.get('cells', []):
+        try:
+            cell_type = cell.get('cell_type')
+            source_content = cell.get('source', [])
+            
+            if isinstance(source_content, list):
+                source_content = ''.join(source_content)
+            
+            if cell_type == 'markdown':
+                html_content.append(f"<div class='markdown-cell'>{convert_html_to_markdown(source_content)}</div>")
+            elif cell_type == 'code':
+                html_content.append(f"<div class='code-cell'><pre><code>{source_content}</code></pre></div>")
+
+        except Exception as e:
+            print(f"Warning: Error processing cell in {filepath}: {e}")
+            continue
+
+    html_content.append("</div>")
+    
+    # Get the folder name
+    folder_name = get_parent_folder_name(filepath)
+
+    # Create consolidated record
+    consolidated_record = {
+        "file_path": str(filepath),
+        "file_name": filepath.name,
+        "folder_name": folder_name,
+        "notebook_html": '\n'.join(html_content)
+    }
+
+    return consolidated_record

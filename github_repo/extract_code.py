@@ -1,7 +1,7 @@
 import pandas as pd
 from pathlib import Path
 from processors.python_processor import extract_python_structures
-from processors.notebook_processor import extract_notebook_cells
+from processors.notebook_processor import extract_notebook_cells, extract_consolidated_notebook
 from processors.markdown_processor import extract_markdown_content
 from typing import Dict, Optional, Union
 
@@ -46,13 +46,19 @@ def extract_structures_from_repo(code_root: Union[str, Path]) -> Optional[Dict[s
         except Exception as e:
             print(f"Error processing Python file {py_file}: {e}")
     
-    # Process Jupyter notebooks
+    # Process Jupyter notebooks (both cell-wise and consolidated)
     all_notebook_cells = []
+    all_consolidated_notebooks = []
     
     for notebook_file in ipynb_files:
         try:
+            # Get individual cells
             notebook_cells = extract_notebook_cells(notebook_file)
             all_notebook_cells.extend(notebook_cells)
+            
+            # Get consolidated notebook
+            consolidated_notebook = extract_consolidated_notebook(notebook_file)
+            all_consolidated_notebooks.append(consolidated_notebook)
         except Exception as e:
             print(f"Error processing notebook {notebook_file}: {e}")
     
@@ -72,6 +78,7 @@ def extract_structures_from_repo(code_root: Union[str, Path]) -> Optional[Dict[s
         'standalone_functions': pd.DataFrame(all_standalone_functions) if all_standalone_functions else pd.DataFrame(),
         'class_methods': pd.DataFrame(all_class_methods) if all_class_methods else pd.DataFrame(),
         'notebook_cells': pd.DataFrame(all_notebook_cells) if all_notebook_cells else pd.DataFrame(),
+        'consolidated_notebooks': pd.DataFrame(all_consolidated_notebooks) if all_consolidated_notebooks else pd.DataFrame(),
         'markdown_docs': pd.DataFrame(all_markdown_docs) if all_markdown_docs else pd.DataFrame()
     }
     
@@ -80,6 +87,7 @@ def extract_structures_from_repo(code_root: Union[str, Path]) -> Optional[Dict[s
     print(f'Total number of standalone functions: {len(results["standalone_functions"])}')
     print(f'Total number of class methods: {len(results["class_methods"])}')
     print(f'Total number of notebook cells: {len(results["notebook_cells"])}')
+    print(f'Total number of consolidated notebooks: {len(results["consolidated_notebooks"])}')
     print(f'Total number of markdown documents: {len(results["markdown_docs"])}')
     
     return results
