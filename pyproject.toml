@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "open-source-python-lib-coding-agent"
+version = "0.1.0"
+description = "Building open source code agent"
+authors = ["Dipenpatel3 <patel.dipe@northeastern.edu>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+streamlit = "^1.40.2"
+fastapi = "^0.115.5"
+uvicorn = "^0.32.1"
+snowflake-connector-python = "^3.12.3"
+python-dotenv = "^1.0.1"
+bcrypt = "^4.2.1"
+magika = "^0.5.1"
+gitpython = "^3.1.43"
+pandas = "^2.2.3"
+requests = "^2.32.3"
+pydantic = {extras = ["email"], version = "^2.10.2"}
+beautifulsoup4 = "^4.12.3"
+pyopenssl = "24.0.0"
+cryptography = "42.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
