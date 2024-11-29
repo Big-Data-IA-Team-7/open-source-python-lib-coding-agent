@@ -4,17 +4,22 @@ FROM apache/airflow:2.10.2
 # Switch to root to install system dependencies
 USER root
 
+
 # Install any additional system packages (e.g., PostgreSQL client, Redis client, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
-    redis-tools
+    redis-tools \
+    git
+
+# Set environment variables for GitPython
+ENV GIT_PYTHON_REFRESH=quiet
 
 # Switch back to airflow user
 USER airflow
 
 # Copy requirements.txt and install Python dependencies
 
-RUN pip install poetry
+#RUN pip install poetry
 
 #COPY pyproject.toml poetry.lock ./
 

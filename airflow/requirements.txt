@@ -7,3 +7,5 @@ bs4
 langchain-community
 langchain-pinecone
 boto3
+gitpython
+snowflake-connector-python
