@@ -23,10 +23,10 @@ default_args = {
 
 # Define the DAG
 with DAG(
-    'github_parallel_processing_dag',
+    'github_repo_processing_dag',
     default_args=default_args,
     description='Clone a GitHub repo, process files by type, and load into Snowflake',
-    schedule_interval=None,  # Manual trigger
+    schedule_interval=None,
     catchup=False
 ) as dag:
 
@@ -112,52 +112,3 @@ with DAG(
     process_py_task >> load_py_task
     process_ipynb_task >> load_ipynb_task
     process_md_task >> load_md_task
-
-
-
-
-'''
-  
-    process_ipynb_task = PythonOperator(
-        task_id='process_ipynb_files',
-        python_callable=process_ipynb_files_task,
-        provide_context=True,
-    )
-
-    # Task 4: Process Python files
-
-    process_py_task = PythonOperator(
-        task_id='process_py_files',
-        python_callable=process_py_files_task,
-        provide_context=True,
-    )
-
-    # Task 5: Load Markdown files to Snowflake
-    load_md_task = PythonOperator(
-        task_id='load_md_to_snowflake',
-        python_callable=load_md_to_snowflake_task,
-        provide_context=True,
-    )
-
-    # Task 6: Load Jupyter notebook cells to Snowflake
-
-    load_ipynb_task = PythonOperator(
-        task_id='load_ipynb_to_snowflake',
-        python_callable=load_ipynb_to_snowflake_task,
-        provide_context=True,
-    )
-
-    # Task 7: Load Python files to Snowflake
-
-    load_py_task = PythonOperator(
-        task_id='load_py_to_snowflake',
-        python_callable=load_py_to_snowflake_task,
-        provide_context=True,
-    )
-
-    # Task dependencies
-    clone_task >> [process_md_task, process_ipynb_task, process_py_task]
-    process_md_task >> load_md_task
-    process_ipynb_task >> load_ipynb_task
-    process_py_task >> load_py_task
-'''
