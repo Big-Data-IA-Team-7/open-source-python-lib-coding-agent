@@ -1,4 +1,4 @@
-from .routes import user_auth
+from fast_api.routes import user_auth
 from fastapi import FastAPI
 
 app = FastAPI()

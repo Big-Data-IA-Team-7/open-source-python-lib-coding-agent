@@ -22,6 +22,13 @@ pydantic = {extras = ["email"], version = "^2.10.2"}
 beautifulsoup4 = "^4.12.3"
 pyopenssl = "24.0.0"
 cryptography = "42.0.0"
+langchain-core = "^0.3.21"
+langgraph = "^0.2.53"
+langchain = "^0.3.9"
+langchain-openai = "^0.2.10"
+langchain-pinecone = "^0.2.0"
+pinecone-client = "^5.0.1"
+boto3 = "^1.35.71"
 
 
 [build-system]
