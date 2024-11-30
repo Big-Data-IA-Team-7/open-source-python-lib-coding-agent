@@ -4,7 +4,7 @@ from typing_extensions import TypedDict
 from langchain_core.documents import Document
 from langchain_core.messages import AnyMessage
 from langgraph.graph import add_messages
-from fast_api.services.langgraph_agents.utils import reduce_docs
+from langgraph_graphs.langgraph_agents.utils import reduce_docs
 
 @dataclass(kw_only=True)
 class InputState:

@@ -12,10 +12,10 @@ from langgraph.constants import Send
 from langgraph.graph import END, START, StateGraph
 from typing_extensions import TypedDict
 
-from fast_api.services import retrieval
-from fast_api.services.langgraph_agents.code_retrieval_graph.configuration import AgentConfiguration
-from fast_api.services.langgraph_agents.code_retrieval_graph.researcher_graph.state import QueryState, ResearcherState
-from fast_api.services.langgraph_agents.utils import load_chat_model
+from langgraph_graphs import retrieval
+from langgraph_graphs.langgraph_agents.code_retrieval_graph.configuration import AgentConfiguration
+from langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph.state import QueryState, ResearcherState
+from langgraph_graphs.langgraph_agents.utils import load_chat_model
 
 
 async def generate_queries(

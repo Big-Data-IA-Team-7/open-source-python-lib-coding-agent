@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from fast_api.services.langgraph_agents.configuration import BaseConfiguration
-from fast_api.services.langgraph_agents.code_retrieval_graph import prompts
+from langgraph_graphs.langgraph_agents.configuration import BaseConfiguration
+from langgraph_graphs.langgraph_agents.code_retrieval_graph import prompts
 
 
 @dataclass(kw_only=True)

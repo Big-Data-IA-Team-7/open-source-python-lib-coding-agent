@@ -1,10 +1,56 @@
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union, List
+import re
+import boto3
+import os
 
 from langchain_core.documents import Document
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
 
 import uuid
+
+def remove_code_file_placeholders(docs: List[Document]) -> List[Document]:
+    """Remove code file placeholder markers from document content.
+
+    Args:
+        docs (List[Document]): List of document objects that have a page_content attribute
+            containing text that may include code file placeholders.
+
+    Returns:
+        List[Document]: The same list of documents with code file placeholders removed
+            from their page_content.
+    """
+    for doc in docs:
+        doc.page_content = re.sub(r'\[CODE FILE: [^\]]+\]', '', doc.page_content)
+    return docs
+
+def replace_s3_locations_with_content(docs: List[Document]) -> List[Document]:
+    """Replace S3 location strings in document content with actual file contents.
+
+    Args:
+        docs (List[Document]): List of document objects that have a page_content attribute
+            containing text that may include S3 locations.
+
+    Returns:
+        List[Document]: The same list of documents with S3 locations replaced with actual content.
+    """
+    s3_client = boto3.client('s3', 
+                            aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID", "not_provided"),
+                            aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY", "not_provided"))
+
+    for doc in docs:
+        s3_locations = re.findall(r's3://[^\s\n]+', doc.page_content)
+        for s3_location in s3_locations:
+            try:
+                bucket, key = s3_location.replace('s3://', '').split('/', 1)
+                response = s3_client.get_object(Bucket=bucket, Key=key)
+                file_content = response['Body'].read().decode('utf-8')
+                doc.page_content = doc.page_content.replace(s3_location, file_content)
+            
+            except Exception as e:
+                print(f"Error processing {s3_location}: {e}")
+    
+    return docs
 
 def load_chat_model(fully_specified_name: str) -> BaseChatModel:
     """Load a chat model from a fully specified name.

@@ -10,8 +10,8 @@ from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import RunnableConfig
 from langchain_pinecone import PineconeVectorStore
 
-from fast_api.services.langgraph_agents.configuration import BaseConfiguration
-from fast_api.services.constants import PINECONE_DOCS_INDEX_NAME
+from langgraph_graphs.langgraph_agents.configuration import BaseConfiguration
+from langgraph_graphs.constants import PINECONE_DOCS_INDEX_NAME
 
 
 def make_text_encoder(model: str) -> Embeddings:
