@@ -1,11 +1,12 @@
 import asyncio
 
-from typing import Any, TypedDict, cast
+from typing import Any, TypedDict, cast, Literal
 
 from langgraph.graph import START, StateGraph, END
 from langchain_core.runnables import RunnableConfig
+from langchain_core.messages import BaseMessage
 
-from langgraph_graphs.langgraph_agents.utils import load_chat_model, replace_s3_locations_with_content, remove_code_file_placeholders
+from langgraph_graphs.langgraph_agents.utils import load_chat_model, replace_s3_locations_with_content, remove_code_file_placeholders, format_docs
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph.graph import graph as researcher_graph
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.state import AgentState, InputState
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.configuration import AgentConfiguration
@@ -63,12 +64,57 @@ async def create_research_plan(
         "query": state.messages[-1].content,
     }
 
+def check_finished(state: AgentState) -> Literal["respond", "conduct_research"]:
+    """Determine if the research process is complete or if more research is needed.
+
+    This function checks if there are any remaining steps in the research plan:
+        - If there are, route back to the `conduct_research` node
+        - Otherwise, route to the `respond` node
+
+    Args:
+        state (AgentState): The current state of the agent, including the remaining research steps.
+
+    Returns:
+        Literal["respond", "conduct_research"]: The next step to take based on whether research is complete.
+    """
+    if len(state.steps or []) > 0:
+        return "conduct_research"
+    else:
+        return "respond"
+
+async def respond(
+    state: AgentState, *, config: RunnableConfig
+) -> dict[str, list[BaseMessage]]:
+    """Generate a final response to the user's query based on the conducted research.
+
+    This function formulates a comprehensive answer using the conversation history and the documents retrieved by the researcher.
+
+    Args:
+        state (AgentState): The current state of the agent, including retrieved documents and conversation history.
+        config (RunnableConfig): Configuration with the model used to respond.
+
+    Returns:
+        dict[str, list[str]]: A dictionary with a 'messages' key containing the generated response.
+    """
+    configuration = AgentConfiguration.from_runnable_config(config)
+    model = load_chat_model(configuration.response_model)
+    # TODO: add a re-ranker here
+    top_k = 20
+    context = format_docs(state.documents[:top_k])
+    prompt = configuration.response_system_prompt.format(context=context)
+    messages = [{"role": "system", "content": prompt}] + state.messages
+    response = await model.ainvoke(messages)
+    return {"messages": [response], "answer": response.content}
+
 builder = StateGraph(AgentState, input=InputState, config_schema=AgentConfiguration)
-builder.add_edge(START, "create_research_plan")
 builder.add_node(create_research_plan)
 builder.add_node(conduct_research)
+builder.add_node(respond)
+
+builder.add_edge(START, "create_research_plan")
 builder.add_edge("create_research_plan", "conduct_research")
-builder.add_edge("conduct_research", END)
+builder.add_conditional_edges("conduct_research", check_finished)
+builder.add_edge("respond", END)
 
 graph = builder.compile()
 
