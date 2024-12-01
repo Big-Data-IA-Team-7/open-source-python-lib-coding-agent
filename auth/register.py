@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 import time
 from requests.exceptions import RequestException
-from validate_fields import is_valid_username, is_valid_email, is_valid_password
+from utils.validate_fields import is_valid_username, is_valid_email, is_valid_password
 
 # Load environment variables from .env file
 load_dotenv()

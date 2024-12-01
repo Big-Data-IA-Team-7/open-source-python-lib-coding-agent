@@ -1,5 +1,8 @@
 import streamlit as st
 import traceback
+import asyncio
+from utils.api_helpers import generatecode_api
+from utils.chat_helpers import process_stream
 
 def safe_chat_interface():
     try:
@@ -10,15 +13,13 @@ def safe_chat_interface():
             st.session_state['last_response'] = None
         if 'feedback_given' not in st.session_state:
             st.session_state['feedback_given'] = False
-        
-        # Add error tracking
         if 'last_error' not in st.session_state:
             st.session_state['last_error'] = None
+        if 'token' not in st.session_state:
+            st.error("Please log in first")
+            return
 
         st.title("Chat Interface")
-
-        # Chat input
-        user_input = st.chat_input("Enter your query:")
 
         # Display chat history
         try:
@@ -29,6 +30,9 @@ def safe_chat_interface():
             st.warning("Error displaying chat history. The history may be reset.")
             st.session_state['history'] = []
 
+        # Chat input
+        user_input = st.chat_input("Enter your query:")
+
         # Handle user input
         if user_input:
             try:
@@ -37,15 +41,41 @@ def safe_chat_interface():
                     st.markdown(user_input)
                 st.session_state['history'].append({"role": "user", "content": user_input})
 
-                # Simulate bot response (replace with actual AI response logic later)
+                # Call API and display streaming response
                 with st.chat_message("assistant"):
-                    response = f"This is a simulated response to: {user_input}"
-                    st.markdown(response)
-                
-                # Store the last response
-                st.session_state['last_response'] = response
-                st.session_state['history'].append({"role": "assistant", "content": response})
-                st.session_state['feedback_given'] = False
+                    message_placeholder = st.empty()
+                    try:
+                        # Get the response
+                        response = asyncio.run(generatecode_api(
+                            user_input, 
+                            st.session_state['history'],
+                            st.session_state['token']
+                        ))
+                        
+                        if response.status_code == 401:
+                            st.error("Authentication failed. Please log in again.")
+                            return
+                        elif response.status_code != 200:
+                            raise Exception(f"API returned status code {response.status_code}")
+                        
+                        # Process the streaming response in an async function
+                        full_response = asyncio.run(process_stream(response, message_placeholder))
+                        
+                        # Final update without cursor
+                        if full_response:
+                            st.session_state['last_response'] = full_response
+                            st.session_state['history'].append({
+                                "role": "assistant", 
+                                "content": full_response
+                            })
+                            st.session_state['feedback_given'] = False
+                        
+                    except Exception as stream_error:
+                        if "Stream cancelled by user" in str(stream_error):
+                            message_placeholder.warning("Response generation was cancelled.")
+                        else:
+                            message_placeholder.error(f"Error processing response: {str(stream_error)}")
+                        return
 
             except Exception as response_error:
                 st.error("An error occurred while processing your message.")
@@ -89,9 +119,6 @@ def safe_chat_interface():
                 st.text_area("Detailed Traceback:", value=error['traceback'], height=200)
 
     except Exception as e:
-        # Catch-all error handling
         st.error("A critical error occurred. Please refresh the page.")
         st.error(f"Error details: {str(e)}")
-        
-        # Log the full traceback
         st.text_area("Error Traceback:", value=traceback.format_exc(), height=200)

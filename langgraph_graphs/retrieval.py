@@ -33,8 +33,6 @@ def make_pinecone_retriever(
 
     pinecone_api_key = os.environ.get("PINECONE_API_KEY", "not_provided")
 
-    print(pinecone_api_key)
-
     vectorstore = PineconeVectorStore(index_name=PINECONE_DOCS_INDEX_NAME,
                                                 pinecone_api_key=pinecone_api_key,
                                                 embedding=embedding_model)

@@ -1,5 +1,3 @@
-import asyncio
-
 from typing import Any, TypedDict, cast, Literal
 
 from langgraph.graph import START, StateGraph, END
@@ -22,10 +20,6 @@ async def conduct_research(state: AgentState) -> dict[str, Any]:
     Returns:
         dict[str, list[str]]: A dictionary with 'documents' containing the research results and
                               'steps' containing the remaining research steps.
-
-    Behavior:
-        - Invokes the researcher_graph with the first step of the research plan.
-        - Updates the state with the retrieved documents and removes the completed step.
     """
     result = await researcher_graph.ainvoke({"question": state.steps[0]})
     
@@ -117,11 +111,4 @@ builder.add_conditional_edges("conduct_research", check_finished)
 builder.add_edge("respond", END)
 
 graph = builder.compile()
-
-async def stream_output():
-    async for chunk in graph.astream({"messages": [{"role": "user", "content": "How do I implement a RAG agent using LangGraph architecture?"}]}):
-        print(chunk)
-
-asyncio.run(stream_output())
-
 graph.name = "CodeRetrievalGraph"
