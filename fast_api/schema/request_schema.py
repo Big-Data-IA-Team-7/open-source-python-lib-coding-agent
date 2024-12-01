@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr
+from typing import List, Dict
 
 class LoginRequest(BaseModel):
     username: str = Field(
@@ -32,3 +33,7 @@ class UserRegister(BaseModel):
         max_length=100,
         description="The user's password, must be at least 6 characters long"
     )
+
+class ChatRequest(BaseModel):
+    query: str
+    history: List[Dict[str, str]] = []
