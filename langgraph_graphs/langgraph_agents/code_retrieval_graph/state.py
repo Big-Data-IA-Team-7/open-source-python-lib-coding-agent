@@ -4,7 +4,7 @@ from typing_extensions import TypedDict
 from langchain_core.documents import Document
 from langchain_core.messages import AnyMessage
 from langgraph.graph import add_messages
-from langgraph_graphs.langgraph_agents.utils import reduce_docs, append_code
+from langgraph_graphs.langgraph_agents.utils import reduce_docs, reduce_codes
 
 @dataclass(kw_only=True)
 class InputState:
@@ -27,8 +27,8 @@ class AgentState(InputState):
     """A list of steps in the research plan."""
     documents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
     """Populated by the retriever. This is a list of documents that the agent can reference."""
-    code: Annotated[list[str], append_code] = field(default_factory=list)
-    """Populated by the retriever. This is a list of code that the agent can reference."""
+    code: Annotated[list[tuple[str, ...]], reduce_codes] = field(default_factory=list)
+    """Populated by the retriever. This is a list of code blocks that the agent can reference."""
     answer: str = field(default="")
     """Final answer. Useful for evaluations"""
     query: str = field(default="")

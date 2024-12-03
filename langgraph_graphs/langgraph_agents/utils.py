@@ -184,7 +184,13 @@ def format_docs_code(docs: Optional[list[Document]], code: Optional[list[str]]) 
         <code></code>
     """
     doc_content = "\n".join(_format_doc(doc) for doc in docs) if docs else ""
-    code_content = "\n".join(_format_code(c) for c in code) if code else ""
+
+    if code:
+        # Extract the first element from each tuple and join them with newlines
+        code_snippets = [tup[0] for tup in code if tup and tup[0]]  # Skip empty tuples or empty strings
+        code_content = "\n\n".join(code_snippets)  # Add double newline between code blocks for readability
+    else:
+        code_content = ""
 
     return f"""<documents>
 {doc_content}
@@ -234,15 +240,29 @@ def format_docs(docs: Optional[list[Document]]) -> str:
 </documents>
 """
 
-def append_code(existing: list[str], new_codes: list[str]) -> list[str]:
-    """Reducer function to append new codes to the list if they don't already exist."""
-    if existing is None:
-        return new_codes
+def reduce_codes(
+    existing: Optional[list[tuple[str, ...]]],
+    new: Union[
+        list[tuple[str, ...]],
+        tuple[str, ...],
+        Literal["delete"]],
+) -> list[tuple[str, ...]]:
+    """Process code inputs and maintain the code list."""
     
-    # Create a set of existing codes for faster lookup
-    existing_set = set(existing)
+    if new == "delete":
+        return []
+        
+    existing_list = list(existing) if existing else []
     
-    # Only append codes that don't already exist
-    unique_new_codes = [code for code in new_codes if code not in existing_set]
+    # Convert single tuple to list of tuples
+    if isinstance(new, tuple):
+        new = [new]
+        
+    if isinstance(new, list):
+        # Add new codes only if they don't exist in the current list
+        for code_tuple in new:
+            # For debug printing, safely handle the tuple
+            if code_tuple not in existing_list:
+                existing_list.append(code_tuple)
     
-    return existing + unique_new_codes
+    return existing_list

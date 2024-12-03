@@ -62,21 +62,26 @@ def process_stream(line: str):
                         st.error(f"Error processing research plan: {e}")
                     
                 elif "'respond'" in current_chunk:
-                    # Handle AIMessage format using string parsing
-                    start_marker = "content='"
-                    end_marker = "', additional_kwargs"
+                    # Handle AIMessage format using string parsing for both quote types
+                    start_markers = ["content='", 'content="']
+                    end_markers = ["', additional_kwargs", '", additional_kwargs']
                     
-                    start_idx = current_chunk.find(start_marker)
-                    if start_idx != -1:
-                        start_idx += len(start_marker)
-                        end_idx = current_chunk.find(end_marker, start_idx)
-                        if end_idx != -1:
-                            message_content = current_chunk[start_idx:end_idx]
-                            
-                            processed_content = preprocess_content(message_content)
-                            
-                            st.markdown(processed_content)
-                            return processed_content
+                    message_content = None
+                    
+                    # Try each combination of start and end markers
+                    for start_marker, end_marker in zip(start_markers, end_markers):
+                        start_idx = current_chunk.find(start_marker)
+                        if start_idx != -1:
+                            start_idx += len(start_marker)
+                            end_idx = current_chunk.find(end_marker, start_idx)
+                            if end_idx != -1:
+                                message_content = current_chunk[start_idx:end_idx]
+                                break
+                    
+                    if message_content is not None:
+                        processed_content = preprocess_content(message_content)
+                        st.markdown(processed_content)
+                        return processed_content
                 
             except Exception as e:
                 st.error(f"Exception occurred in main processing: {e}")

@@ -97,13 +97,11 @@ async def list_classes_and_apis(
     ]
     response = cast(SqlResponse, await model.ainvoke(messages))
 
-    print("Class List: ", response["class_names"])
-    print("API List: ", response["api_names"])
     return {"class_names": response["class_names"], "api_names": response["api_names"]}
 
 async def query_database(
         state: SqlState, *, config: RunnableConfig
-) -> dict[str, list[str]]:
+) -> dict[str, list[tuple[str, ...]]]:
     """Retrieve code based on the documents from an SQL agent.
     
     This function uses an SQL agent to fetch relevant code from Snowflake for a given document.
@@ -113,7 +111,7 @@ async def query_database(
         config (RunnableConfig): Configuration with the retriever used to fetch documents.
 
     Returns:
-        dict[str, list[str]]: A dictionary with a 'code' key containing the list of code retrieved from the Snowflake db.
+        dict[str, list[tuple[str, ...]]: A dictionary with a 'code' key containing the list of code retrieved from the Snowflake db.
     """
 
     db = SQLDatabase.from_uri(
@@ -137,10 +135,24 @@ async def query_database(
 
     response = db.run(query)
 
-    print("Code: ", response)
+    # Process the response to ensure it's in the correct format
+    if isinstance(response, str):
+        # If it's a string representation of a list of tuples, eval it
+        try:
+            processed_response = eval(response)
+            if not isinstance(processed_response, list):
+                processed_response = [processed_response]
+        except:
+            # If eval fails, wrap the string in a tuple and list
+            processed_response = [(response,)]
+    elif isinstance(response, list):
+        # If it's already a list but elements aren't tuples
+        processed_response = [(item,) if not isinstance(item, tuple) else item for item in response]
+    else:
+        # Fallback case - wrap whatever we got in a tuple and list
+        processed_response = [(response,)]
 
-    return {"code": response}
-
+    return {"code": processed_response}
 
 def retrieve_in_parallel(state: ResearcherState) -> list[Send]:
     """Create parallel retrieval tasks for each generated query.
