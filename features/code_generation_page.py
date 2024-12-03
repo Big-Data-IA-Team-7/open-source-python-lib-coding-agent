@@ -1,8 +1,6 @@
 import streamlit as st
 import traceback
-import asyncio
-from utils.api_helpers import generatecode_api
-from utils.chat_helpers import process_stream
+from utils.api_helpers import stream_code_generation
 
 def safe_chat_interface():
     try:
@@ -46,22 +44,10 @@ def safe_chat_interface():
                     message_placeholder = st.empty()
                     try:
                         # Get the response
-                        response = asyncio.run(generatecode_api(
-                            user_input, 
-                            st.session_state['history'],
-                            st.session_state['token']
-                        ))
+                        # Use asyncio.run for the top-level async call
+                        full_response = stream_code_generation(user_input, st.session_state['history'])
                         
-                        if response.status_code == 401:
-                            st.error("Authentication failed. Please log in again.")
-                            return
-                        elif response.status_code != 200:
-                            raise Exception(f"API returned status code {response.status_code}")
-                        
-                        # Process the streaming response in an async function
-                        full_response = asyncio.run(process_stream(response, message_placeholder))
-                        
-                        # Final update without cursor
+                        # # Update session state if response is received
                         if full_response:
                             st.session_state['last_response'] = full_response
                             st.session_state['history'].append({
@@ -69,6 +55,15 @@ def safe_chat_interface():
                                 "content": full_response
                             })
                             st.session_state['feedback_given'] = False
+                        else:
+                            # Handle empty response
+                            error_message = "Sorry, I couldn't generate a response. Please try again."
+                            message_placeholder.markdown(error_message)
+                            st.session_state['last_response'] = error_message
+                            st.session_state['history'].append({
+                                "role": "assistant", 
+                                "content": error_message
+                            })
                         
                     except Exception as stream_error:
                         if "Stream cancelled by user" in str(stream_error):

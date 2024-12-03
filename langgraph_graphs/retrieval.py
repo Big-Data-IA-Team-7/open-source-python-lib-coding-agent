@@ -25,7 +25,10 @@ def make_text_encoder(model: str) -> Embeddings:
         case _:
             raise ValueError(f"Unsupported embedding provider: {provider}")
 
-
+''' The Context Manager decorator is meant for automatic resource management, im this case,
+of retrievers to setup and cleanup of resources. Setting the contextmanager decorator for a function
+enables the use of 'with' clause for the function and also guarantees cleanup even if exceptions occur.
+'''
 @contextmanager
 def make_pinecone_retriever(
     configuration: BaseConfiguration, embedding_model: Embeddings

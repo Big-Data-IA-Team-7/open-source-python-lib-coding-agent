@@ -29,8 +29,6 @@ async def generate_code(
                 async for chunk in graph.astream({"messages": messages}):
                     # Ensure we're sending text/event-stream format correctly
                     yield f"data: {str(chunk)}\n\n"
-                    # Flush the stream immediately
-                    await asyncio.sleep(0)
                     
             except asyncio.CancelledError:
                 print(f"Stream cancelled by user: {current_user.get('USERNAME')}")

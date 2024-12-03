@@ -1,10 +1,10 @@
 from typing import Any, TypedDict, cast, Literal
 
-from langgraph.graph import START, StateGraph, END
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import BaseMessage
+from langgraph.graph import START, StateGraph, END
 
-from langgraph_graphs.langgraph_agents.utils import load_chat_model, replace_s3_locations_with_content, remove_code_file_placeholders, format_docs
+from langgraph_graphs.langgraph_agents.utils import load_chat_model, format_docs_code
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph.graph import graph as researcher_graph
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.state import AgentState, InputState
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.configuration import AgentConfiguration
@@ -22,11 +22,8 @@ async def conduct_research(state: AgentState) -> dict[str, Any]:
                               'steps' containing the remaining research steps.
     """
     result = await researcher_graph.ainvoke({"question": state.steps[0]})
-    
-    updated_docs = replace_s3_locations_with_content(result["documents"])
-    
-    result["documents"] = remove_code_file_placeholders(updated_docs)
-    return {"documents": result["documents"], "steps": state.steps[1:]}
+
+    return {"documents": result["documents"], "code": result["code"], "steps": state.steps[1:]}
 
 async def create_research_plan(
     state: AgentState, *, config: RunnableConfig
@@ -92,9 +89,8 @@ async def respond(
     """
     configuration = AgentConfiguration.from_runnable_config(config)
     model = load_chat_model(configuration.response_model)
-    # TODO: add a re-ranker here
     top_k = 20
-    context = format_docs(state.documents[:top_k])
+    context = format_docs_code(docs=state.documents[:top_k], code=state.code)
     prompt = configuration.response_system_prompt.format(context=context)
     messages = [{"role": "system", "content": prompt}] + state.messages
     response = await model.ainvoke(messages)

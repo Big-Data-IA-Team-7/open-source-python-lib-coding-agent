@@ -29,21 +29,7 @@ class AgentConfiguration(BaseConfiguration):
     )
 
     # prompts
-
-    router_system_prompt: str = field(
-        default=prompts.ROUTER_SYSTEM_PROMPT,
-        metadata={
-            "description": "The system prompt used for classifying user questions to route them to the correct node."
-        },
-    )
-
-    more_info_system_prompt: str = field(
-        default=prompts.MORE_INFO_SYSTEM_PROMPT,
-        metadata={
-            "description": "The system prompt used for asking for more information from the user."
-        },
-    )
-
+    
     general_system_prompt: str = field(
         default=prompts.GENERAL_SYSTEM_PROMPT,
         metadata={
@@ -55,6 +41,13 @@ class AgentConfiguration(BaseConfiguration):
         default=prompts.RESEARCH_PLAN_SYSTEM_PROMPT,
         metadata={
             "description": "The system prompt used for generating a research plan based on the user's question."
+        },
+    )
+
+    sql_code_check_prompt: str = field(
+        default=prompts.SQL_GENERATE_QUESTION_PROMPT,
+        metadata={
+            "description": "The system prompt used for rechecking the SQL queries generated based on the user's question."
         },
     )
 
