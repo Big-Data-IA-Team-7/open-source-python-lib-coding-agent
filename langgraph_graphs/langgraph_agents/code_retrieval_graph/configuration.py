@@ -58,6 +58,13 @@ class AgentConfiguration(BaseConfiguration):
         },
     )
 
+    sql_code_check_prompt: str = field(
+        default=prompts.SQL_GENERATE_QUESTION_PROMPT,
+        metadata={
+            "description": "The system prompt used for rechecking the SQL queries generated based on the user's question."
+        },
+    )
+
     generate_queries_system_prompt: str = field(
         default=prompts.GENERATE_QUERIES_SYSTEM_PROMPT,
         metadata={

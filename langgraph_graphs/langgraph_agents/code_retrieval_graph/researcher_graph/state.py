@@ -8,7 +8,7 @@ from typing import Annotated
 
 from langchain_core.documents import Document
 
-from langgraph_graphs.langgraph_agents.utils import reduce_docs
+from langgraph_graphs.langgraph_agents.utils import reduce_docs, append_code
 
 @dataclass(kw_only=True)
 class QueryState:
@@ -16,6 +16,14 @@ class QueryState:
 
     query: str
 
+@dataclass(kw_only=True)
+class SqlState:
+    """Private state for the query_database node in the researcher graph."""
+
+    class_names: list[str] = field(default_factory=list)
+    """A list of class names based on the documents the retriever retrieves."""
+    api_names: list[str] = field(default_factory=list)
+    """A list of API names based on the documents the retriever retrieves."""
 
 @dataclass(kw_only=True)
 class ResearcherState:
@@ -27,3 +35,5 @@ class ResearcherState:
     """A list of search queries based on the question that the researcher generates."""
     documents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
     """Populated by the retriever. This is a list of documents that the agent can reference."""
+    code: Annotated[list[str], append_code] = field(default_factory=list)
+    """A list of code blocks for various classes and APIs retrieved from the Snowflake DB."""

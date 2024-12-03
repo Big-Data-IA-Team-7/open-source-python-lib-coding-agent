@@ -2,12 +2,11 @@ from typing import Any, Literal, Optional, Union, List
 import re
 import boto3
 import os
+import uuid
 
 from langchain_core.documents import Document
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
-
-import uuid
 
 def _format_doc(doc: Document) -> str:
     """Format a single document as XML.
@@ -24,6 +23,10 @@ def _format_doc(doc: Document) -> str:
         meta = f" {meta}"
 
     return f"<document{meta}>\n{doc.page_content}\n</document>"
+
+def _format_code(code: str) -> str:
+    """Format a single code snippet as XML."""
+    return f"<code>\n{code}\n</code>"
 
 def remove_code_file_placeholders(docs: List[Document]) -> List[Document]:
     """Remove code file placeholder markers from document content.
@@ -146,20 +149,23 @@ def reduce_docs(
 
     return existing_list + new_list
 
-def format_docs(docs: Optional[list[Document]]) -> str:
-    """Format a list of documents as XML.
+def format_docs_code(docs: Optional[list[Document]], code: Optional[list[str]]) -> str:
+    """Format a list of documents and code snippets as XML.
 
-    This function takes a list of Document objects and formats them into a single XML string.
+    This function takes a list of Document objects and a list of code snippets,
+    and formats them into a single XML string.
 
     Args:
         docs (Optional[list[Document]]): A list of Document objects to format, or None.
+        code (Optional[list[str]]): A list of code snippets to format, or None.
 
     Returns:
-        str: A string containing the formatted documents in XML format.
+        str: A string containing the formatted documents and code in XML format.
 
     Examples:
         >>> docs = [Document(page_content="Hello"), Document(page_content="World")]
-        >>> print(format_docs(docs))
+        >>> code = ["print('Hello')", "print('World')"]
+        >>> print(format_docs(docs, code))
         <documents>
         <document>
         Hello
@@ -168,13 +174,69 @@ def format_docs(docs: Optional[list[Document]]) -> str:
         World
         </document>
         </documents>
+        <code>
+        print('Hello')
+        print('World')
+        </code>
 
-        >>> print(format_docs(None))
+        >>> print(format_docs(None, None))
         <documents></documents>
+        <code></code>
     """
-    if not docs:
-        return "<documents></documents>"
-    formatted = "\n".join(_format_doc(doc) for doc in docs)
+    doc_content = "\n".join(_format_doc(doc) for doc in docs) if docs else ""
+    code_content = "\n".join(_format_code(c) for c in code) if code else ""
+
     return f"""<documents>
-{formatted}
-</documents>"""
+{doc_content}
+</documents>
+<code>
+{code_content}
+</code>"""
+
+def format_docs(docs: Optional[list[Document]]) -> str:
+    """Format a list of documents and code snippets as XML.
+
+    This function takes a list of Document objects and a list of code snippets,
+    and formats them into a single XML string.
+
+    Args:
+        docs (Optional[list[Document]]): A list of Document objects to format, or None.
+        code (Optional[list[str]]): A list of code snippets to format, or None.
+
+    Returns:
+        str: A string containing the formatted documents and code in XML format.
+
+    Examples:
+        >>> docs = [Document(page_content="Hello"), Document(page_content="World")]
+        >>> code = ["print('Hello')", "print('World')"]
+        >>> print(format_docs(docs, code))
+        <documents>
+        <document>
+        Hello
+        </document>
+        <document>
+        World
+        </document>
+        </documents>
+        <code>
+        print('Hello')
+        print('World')
+        </code>
+
+        >>> print(format_docs(None, None))
+        <documents></documents>
+        <code></code>
+    """
+    doc_content = "\n".join(_format_doc(doc) for doc in docs) if docs else ""
+
+    return f"""<documents>
+{doc_content}
+</documents>
+"""
+
+def append_code(existing: list[str], new_code: str) -> list[str]:
+    """Reducer function to append new code to the list of all codes."""
+    if existing is None:
+        return [new_code]
+    else:
+        return existing + [new_code]
