@@ -29,21 +29,7 @@ class AgentConfiguration(BaseConfiguration):
     )
 
     # prompts
-
-    router_system_prompt: str = field(
-        default=prompts.ROUTER_SYSTEM_PROMPT,
-        metadata={
-            "description": "The system prompt used for classifying user questions to route them to the correct node."
-        },
-    )
-
-    more_info_system_prompt: str = field(
-        default=prompts.MORE_INFO_SYSTEM_PROMPT,
-        metadata={
-            "description": "The system prompt used for asking for more information from the user."
-        },
-    )
-
+    
     general_system_prompt: str = field(
         default=prompts.GENERAL_SYSTEM_PROMPT,
         metadata={

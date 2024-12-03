@@ -18,17 +18,10 @@ class InputState:
 
     messages: Annotated[List[AnyMessage], add_messages]
 
-class Router(TypedDict):
-    """Classify user query."""
-
-    logic: str
-    type: Literal["more-info", "langchain", "general"]
-
 @dataclass(kw_only=True)
 class AgentState(InputState):
     """State of the retieval graph / agent."""
 
-    router: Router = field(default_factory=lambda: Router(type="general", logic=""))
     """The router's classification of the user's query."""
     steps: list[str] = field(default_factory=list)
     """A list of steps in the research plan."""

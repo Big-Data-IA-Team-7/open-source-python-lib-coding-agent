@@ -96,6 +96,9 @@ async def list_classes_and_apis(
         {"role": "human", "content": formatted_context},
     ]
     response = cast(SqlResponse, await model.ainvoke(messages))
+
+    print("Class List: ", response["class_names"])
+    print("API List: ", response["api_names"])
     return {"class_names": response["class_names"], "api_names": response["api_names"]}
 
 async def query_database(
@@ -123,16 +126,18 @@ async def query_database(
         f"role={configuration.SNOWFLAKE_ROLE}"
     )
 
-    class_names = ", ".join(f"'{name}'" for name in state.class_names)
-    api_names = ", ".join(f"'{name}'" for name in state.api_names)
+    names = set(state.class_names) | set(state.api_names)  # Combine both lists and remove duplicates
+    formatted_names = ", ".join(f"'{name}'" for name in names)
 
     query = f"""
-    SELECT code FROM EDW.GITHUB_CLASSES WHERE CLASS_NAME IN ({class_names})
+    SELECT code FROM EDW.GITHUB_CLASSES WHERE CLASS_NAME IN ({formatted_names})
     UNION
-    SELECT code FROM EDW.GITHUB_FUNCTIONS WHERE FUNCTION_NAME IN ({api_names});
+    SELECT code FROM EDW.GITHUB_FUNCTIONS WHERE FUNCTION_NAME IN ({formatted_names});
     """
 
     response = db.run(query)
+
+    print("Code: ", response)
 
     return {"code": response}
 
@@ -173,7 +178,6 @@ builder.add_conditional_edges(
 builder.add_edge("retrieve_documents", "list_classes_and_apis")
 builder.add_edge("list_classes_and_apis", "query_database")
 builder.add_edge("query_database", END)
-# builder.add_edge("retrieve_documents", END)
 
 # Compile into a graph object that you can invoke and deploy.
 graph = builder.compile()

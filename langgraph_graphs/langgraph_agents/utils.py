@@ -234,9 +234,15 @@ def format_docs(docs: Optional[list[Document]]) -> str:
 </documents>
 """
 
-def append_code(existing: list[str], new_code: str) -> list[str]:
-    """Reducer function to append new code to the list of all codes."""
+def append_code(existing: list[str], new_codes: list[str]) -> list[str]:
+    """Reducer function to append new codes to the list if they don't already exist."""
     if existing is None:
-        return [new_code]
-    else:
-        return existing + [new_code]
+        return new_codes
+    
+    # Create a set of existing codes for faster lookup
+    existing_set = set(existing)
+    
+    # Only append codes that don't already exist
+    unique_new_codes = [code for code in new_codes if code not in existing_set]
+    
+    return existing + unique_new_codes

@@ -1,29 +1,54 @@
-import httpx
 import os
-from typing import Optional
+import streamlit as st
+import requests
+from utils.chat_helpers import process_stream
 
 FAST_API_URL = os.getenv("FAST_API_URL")
 
-async def generatecode_api(user_input: str, history: list, jwt_token: str) -> Optional[httpx.Response]:
+def stream_code_generation(query: str, history: list):
     """
-    Make async API call to the code generation endpoint.
+    Stream code generation from the API endpoint and process the response.
     
     Args:
-        user_input (str): The user's query
-        history (list): Chat history
-        jwt_token (str): JWT authentication token
+        query: The user's query
+        history: List of previous chat messages
+    Returns:
+        str: The complete response if successful, None if errors occur
     """
+    payload = {
+        "query": query,
+        "history": history
+    }
+
+    headers = {
+        "Accept": "text/event-stream",
+        "Authorization": f"Bearer {st.session_state['token']}"
+    }
+    
+    full_response = ""  # Initialize before the loop
+    
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{FAST_API_URL}/chat/generate-code",
-                json={"query": user_input, "history": history},
-                headers={
-                    "Accept": "text/event-stream",
-                    "Authorization": f"Bearer {jwt_token}"
-                },
-                timeout=30
-            )
-            return response
+        with requests.post(
+            f"{FAST_API_URL}/chat/generate-code",
+            json=payload,
+            headers=headers,
+            stream=True
+        ) as response:
+            response.raise_for_status()
+            
+            for line in response.iter_lines():
+                if line:
+                    decoded_line = line.decode('utf-8')
+                    chunk_response = process_stream(decoded_line)
+                    if chunk_response:
+                        full_response = chunk_response  # Update the full response
+                        
+        return full_response  # Return the final complete response
+        
+    except requests.exceptions.RequestException as e:
+        st.error(f"API request failed: {str(e)}")
+        return None
+        
     except Exception as e:
-        raise Exception(f"API call failed: {str(e)}")
+        st.error(f"An unexpected error occurred: {str(e)}")
+        return None

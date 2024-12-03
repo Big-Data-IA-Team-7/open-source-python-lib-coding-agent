@@ -61,7 +61,7 @@ class BaseConfiguration:
 
     # for backwards compatibility
     k: int = field(
-        default=6,
+        default=3,
         metadata={
             "description": "The number of documents to retrieve. Use search_kwargs instead."
         },

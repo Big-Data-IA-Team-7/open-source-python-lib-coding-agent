@@ -19,13 +19,11 @@ RESEARCH_PLAN_SYSTEM_PROMPT = (
     .messages[0]
     .prompt.template
 )
-
 SQL_GENERATE_QUESTION_PROMPT = (
     hub.pull("generate-question-for-sql-prompt")
     .messages[0]
     .prompt.template
 )
-
 GENERAL_SYSTEM_PROMPT = (
     hub.pull("langchain-ai/chat-langchain-general-prompt").messages[0].prompt.template
 )
