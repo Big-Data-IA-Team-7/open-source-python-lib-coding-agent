@@ -2,7 +2,7 @@ import streamlit as st
 import traceback
 from utils.api_helpers import stream_code_generation
 
-def safe_chat_interface():
+def error_handling_interface():
     try:
         # Error handling for session state initialization
         if 'history' not in st.session_state:
@@ -17,7 +17,38 @@ def safe_chat_interface():
             st.error("Please log in first")
             return
 
-        st.title("Chat Interface")
+        st.title("Error Handler")
+        
+        st.markdown("""
+        Get help debugging your code by providing context, code, and the error message.
+        Our AI will analyze the issue and suggest solutions.
+        """)
+
+        # Input sections
+        with st.expander("Enter Error Details", expanded=True):
+            # Context input
+            context = st.text_area(
+                "Context",
+                placeholder="Describe what you're trying to do and any relevant background information...",
+                height=100
+            )
+
+            # Code input
+            code = st.text_area(
+                "Code",
+                placeholder="Paste your code here...",
+                height=200
+            )
+
+            # Error message input
+            error_message = st.text_area(
+                "Error Message",
+                placeholder="Paste the error message/stack trace here...",
+                height=150
+            )
+
+            # Submit button
+            submit = st.button("Analyze Error")
 
         # Display chat history
         try:
@@ -28,26 +59,37 @@ def safe_chat_interface():
             st.warning("Error displaying chat history. The history may be reset.")
             st.session_state['history'] = []
 
-        # Chat input
-        user_input = st.chat_input("Enter your query:")
-
-        # Handle user input
-        if user_input:
+        # Handle form submission
+        if submit and (context.strip() or code.strip() or error_message.strip()):
             try:
+                # Prepare the combined query
+                user_query = f"""
+                Context:
+                {context}
+
+                Code:
+                ```
+                {code}
+                ```
+
+                Error Message:
+                ```
+                {error_message}
+                ```
+                """
+
                 # Display user message
                 with st.chat_message("user"):
-                    st.markdown(user_input)
-                st.session_state['history'].append({"role": "user", "content": user_input})
+                    st.markdown(user_query)
+                st.session_state['history'].append({"role": "user", "content": user_query})
 
                 # Call API and display streaming response
                 with st.chat_message("assistant"):
                     message_placeholder = st.empty()
                     try:
                         # Get the response
-                        # Use asyncio.run for the top-level async call
-                        full_response = stream_code_generation(user_input, st.session_state['history'])
+                        full_response = stream_code_generation(user_query, st.session_state['history'])
                         
-                        # # Update session state if response is received
                         if full_response:
                             st.session_state['last_response'] = full_response
                             st.session_state['history'].append({
@@ -56,8 +98,7 @@ def safe_chat_interface():
                             })
                             st.session_state['feedback_given'] = False
                         else:
-                            # Handle empty response
-                            error_message = "Sorry, I couldn't generate a response. Please try again."
+                            error_message = "Sorry, I couldn't analyze the error. Please try again."
                             message_placeholder.markdown(error_message)
                             st.session_state['last_response'] = error_message
                             st.session_state['history'].append({
@@ -67,13 +108,13 @@ def safe_chat_interface():
                         
                     except Exception as stream_error:
                         if "Stream cancelled by user" in str(stream_error):
-                            message_placeholder.warning("Response generation was cancelled.")
+                            message_placeholder.warning("Analysis was cancelled.")
                         else:
                             message_placeholder.error(f"Error processing response: {str(stream_error)}")
                         return
 
             except Exception as response_error:
-                st.error("An error occurred while processing your message.")
+                st.error("An error occurred while processing your request.")
                 st.session_state['last_error'] = {
                     'type': type(response_error).__name__,
                     'message': str(response_error),
@@ -83,7 +124,7 @@ def safe_chat_interface():
         # Response Feedback Section
         if st.session_state.get('last_response'):
             st.markdown("---")
-            st.markdown("**Did this response solve your problem?**")
+            st.markdown("**Was this solution helpful?**")
             
             col1, col2 = st.columns(2)
             
@@ -95,7 +136,7 @@ def safe_chat_interface():
             with col2:
                 if st.button("No", key="feedback_negative", disabled=st.session_state.get('feedback_given', False)):
                     st.session_state['feedback_given'] = True
-                    st.error("We're sorry the response didn't help. Our team will work on improving.")
+                    st.error("We're sorry the solution didn't help. Our team will work on improving.")
 
         # Clear chat button
         if st.button("Clear Chat"):
