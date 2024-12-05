@@ -24,10 +24,6 @@ def _format_doc(doc: Document) -> str:
 
     return f"<document{meta}>\n{doc.page_content}\n</document>"
 
-def _format_code(code: str) -> str:
-    """Format a single code snippet as XML."""
-    return f"<code>\n{code}\n</code>"
-
 def remove_code_file_placeholders(docs: List[Document]) -> List[Document]:
     """Remove code file placeholder markers from document content.
 

@@ -62,3 +62,8 @@ class AgentConfiguration(BaseConfiguration):
         default=prompts.RESPONSE_SYSTEM_PROMPT,
         metadata={"description": "The system prompt used for generating responses."},
     )
+
+    eh_response_system_prompt: str = field(
+        default=prompts.EH_RESPONSE_SYSTEM_PROMPT,
+        metadata={"description": "The system prompt used for generating responses to the errors."},
+    )

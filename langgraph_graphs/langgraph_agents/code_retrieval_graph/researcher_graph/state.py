@@ -35,5 +35,5 @@ class ResearcherState:
     """A list of search queries based on the question that the researcher generates."""
     documents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
     """Populated by the retriever. This is a list of documents that the agent can reference."""
-    code: Annotated[list[tuple[str, ...]], reduce_codes] = field(default_factory=list)
+    library_code: Annotated[list[tuple[str, ...]], reduce_codes] = field(default_factory=list)
     """A list of code blocks for various classes and APIs retrieved from the Snowflake DB."""
