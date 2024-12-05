@@ -1,6 +1,6 @@
 import streamlit as st
 import traceback
-from utils.api_helpers import stream_code_generation
+from utils.api_helpers import stream_error_handling
 
 def error_handling_interface():
     try:
@@ -27,8 +27,8 @@ def error_handling_interface():
         # Input sections
         with st.expander("Enter Error Details", expanded=True):
             # Context input
-            context = st.text_area(
-                "Context",
+            task = st.text_area(
+                "Task",
                 placeholder="Describe what you're trying to do and any relevant background information...",
                 height=100
             )
@@ -60,12 +60,12 @@ def error_handling_interface():
             st.session_state['history'] = []
 
         # Handle form submission
-        if submit and (context.strip() or code.strip() or error_message.strip()):
+        if submit and (task.strip() or code.strip() or error_message.strip()):
             try:
                 # Prepare the combined query
                 user_query = f"""
                 Context:
-                {context}
+                {task}
 
                 Code:
                 ```
@@ -88,7 +88,7 @@ def error_handling_interface():
                     message_placeholder = st.empty()
                     try:
                         # Get the response
-                        full_response = stream_code_generation(user_query, st.session_state['history'])
+                        full_response = stream_error_handling(task, code, error_message, st.session_state['history'])
                         
                         if full_response:
                             st.session_state['last_response'] = full_response

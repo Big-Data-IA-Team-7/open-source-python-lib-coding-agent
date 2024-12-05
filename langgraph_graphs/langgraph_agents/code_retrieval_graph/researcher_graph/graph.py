@@ -111,7 +111,7 @@ async def query_database(
         config (RunnableConfig): Configuration with the retriever used to fetch documents.
 
     Returns:
-        dict[str, list[tuple[str, ...]]: A dictionary with a 'code' key containing the list of code retrieved from the Snowflake db.
+        dict[str, list[tuple[str, ...]]: A dictionary with a 'library_code' key containing the list of code retrieved from the Snowflake db.
     """
 
     db = SQLDatabase.from_uri(
@@ -152,7 +152,7 @@ async def query_database(
         # Fallback case - wrap whatever we got in a tuple and list
         processed_response = [(response,)]
 
-    return {"code": processed_response}
+    return {"library_code": processed_response}
 
 def retrieve_in_parallel(state: ResearcherState) -> list[Send]:
     """Create parallel retrieval tasks for each generated query.

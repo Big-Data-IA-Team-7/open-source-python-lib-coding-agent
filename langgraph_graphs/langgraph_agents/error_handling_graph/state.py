@@ -15,17 +15,23 @@ class InputState:
     to the outside world compared to what is maintained internally.
     """
 
+    task: str = field(default="")
+    """This is a short description of what the user is trying to do in the code."""
+    code: str = field(default="")
+    """This is the code which is causing the error given by the user."""
+    error: str = field(default="")
+    """This is the error message that is displayed given by the user."""
     messages: Annotated[List[AnyMessage], add_messages]
 
 @dataclass(kw_only=True)
 class AgentState(InputState):
     """State of the retieval graph / agent."""
 
-    steps: list[str] = field(default_factory=list)
-    """A list of steps in the research plan."""
+    web_search: list[str] = field(default_factory=list)
+    """The list of web search urls and information obtained from the web search agent."""
     documents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
     """Populated by the retriever. This is a list of documents that the agent can reference."""
-    code: Annotated[list[tuple[str, ...]], reduce_codes] = field(default_factory=list)
+    library_code: Annotated[list[tuple[str, ...]], reduce_codes] = field(default_factory=list)
     """Populated by the retriever. This is a list of code blocks that the agent can reference."""
     answer: str = field(default="")
     """Final answer. Useful for evaluations"""
