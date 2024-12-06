@@ -1,5 +1,12 @@
-from fast_api.routes import user_routes, agent_routes
 from fastapi import FastAPI
+from dotenv import load_dotenv
+
+from fast_api.routes import user_routes, agent_routes
+
+from logging_module.logging_config import setup_logging
+
+load_dotenv()
+logger = setup_logging()
 
 app = FastAPI()
 

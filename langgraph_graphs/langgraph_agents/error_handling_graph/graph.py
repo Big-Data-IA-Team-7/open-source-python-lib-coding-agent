@@ -93,5 +93,4 @@ builder.add_edge("conduct_research", "handle_error")
 builder.add_edge("handle_error", END)
 
 graph = builder.compile()
-print("Builder Nodes:", builder.nodes)
 graph.name = "ErrorHandlingGraph"

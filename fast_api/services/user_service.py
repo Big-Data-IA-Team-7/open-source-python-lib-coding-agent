@@ -1,8 +1,12 @@
 import snowflake.connector
 from fastapi import HTTPException, status
-from fast_api.config.db_connection import snowflake_connection, close_connection
 import pandas as pd
 from typing import Optional, Dict, Any
+import logging
+
+from fast_api.config.db_connection import snowflake_connection, close_connection
+
+logger = logging.getLogger(__name__)
 
 def fetch_user_by_email(email: str) -> Optional[pd.DataFrame]:
     """
@@ -22,6 +26,7 @@ def fetch_user_by_email(email: str) -> Optional[pd.DataFrame]:
     
     try:
         if not isinstance(email, str) or not email.strip():
+            logger.error("Invalid email provided")
             raise ValueError("Invalid email provided")
 
         conn = snowflake_connection()
@@ -81,6 +86,7 @@ def fetch_user(username: str) -> Optional[pd.DataFrame]:
     
     try:
         if not isinstance(username, str) or not username.strip():
+            logger.error("Invalid username provided")
             raise ValueError("Invalid username provided")
 
         conn = snowflake_connection()

@@ -1,18 +1,17 @@
 import streamlit as st
-import requests 
-from dotenv import load_dotenv
+import requests
 import os
 import time
+import logging
 from requests.exceptions import RequestException
-from utils.validate_fields import is_valid_username, is_valid_email, is_valid_password
 
-# Load environment variables from .env file
-load_dotenv()
+from utils.validate_fields import is_valid_username, is_valid_email, is_valid_password
 
 # Get the API URL from the environment variables
 FAST_API_URL = os.getenv("FAST_API_URL")
 
 def register_user():
+    logger = logging.getLogger(__name__)
     try:
         # Add back button at the top
         if st.button("← Back", type="secondary"):
@@ -72,6 +71,7 @@ def register_user():
                 # If there are validation errors, display them and stop
                 if validation_errors:
                     for error in validation_errors:
+                        logger.error(error)
                         st.error(error)
                     return
 
@@ -98,6 +98,7 @@ def register_user():
 
                     if response.status_code == 201:
                         # Show success message
+                        logger.info("✅ Registration Successful!")
                         st.success("✅ Registration Successful!")
                         
                         # Show redirecting message with countdown
@@ -114,16 +115,21 @@ def register_user():
                     elif response.status_code == 400:
                         error_data = response.json()
                         error_message = error_data.get('detail', 'User Already Exists')
+                        logger.error(error_message)
                         st.error(error_message)
                     else:
+                        logger.error("Registration failed. Please try again later.")
                         st.error("Registration failed. Please try again later.")
 
                 except RequestException as e:
+                    logger.error(f"Connection error: Unable to reach the server. Please try again later.")
                     st.error(f"Connection error: Unable to reach the server. Please try again later.")
                 except Exception as e:
+                    logger.error("An unexpected error occurred. Please try again.")
                     st.error("An unexpected error occurred. Please try again.")
                     
     except Exception as e:
+        logger.error("Something went wrong with the registration page. Please refresh and try again.")
         st.error("Something went wrong with the registration page. Please refresh and try again.")
         if st.button("Refresh Page"):
             st.rerun()

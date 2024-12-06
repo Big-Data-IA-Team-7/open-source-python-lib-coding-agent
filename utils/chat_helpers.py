@@ -1,4 +1,7 @@
 import streamlit as st
+import logging
+
+logger = logging.getLogger(__name__)
 
 def preprocess_content(content: str) -> str:
     # Replace single `\n` with double newlines for proper markdown rendering
@@ -26,7 +29,6 @@ def process_stream(line: str):
             try:
                 # First check data type without using eval
                 if "'conduct_research'" in current_chunk:
-                    print("Skipping conduct_research data")
                     current_chunk = ""
                     return
                 
@@ -59,6 +61,7 @@ def process_stream(line: str):
                         return None
                     
                     except Exception as e:
+                        logger.error(f"Error processing research plan: {e}")
                         st.error(f"Error processing research plan: {e}")
                     
                 elif "'respond'" in current_chunk:
@@ -91,9 +94,11 @@ def process_stream(line: str):
                                 st.markdown(processed_content)
                                 return processed_content
                         except Exception as e:
+                            logger.error(f"Error processing handle_error: {e}")
                             st.error(f"Error processing handle_error: {e}")
                                     
             except Exception as e:
+                logger.error(f"Exception occurred in main processing: {e}")
                 st.error(f"Exception occurred in main processing: {e}")
                 return None
             

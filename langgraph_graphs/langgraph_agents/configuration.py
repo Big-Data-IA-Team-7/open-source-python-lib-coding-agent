@@ -1,7 +1,10 @@
 from dataclasses import dataclass, field, fields
 from typing import Annotated, Literal, Any, Type, Optional, TypeVar
+import logging
 
 from langchain_core.runnables import RunnableConfig, ensure_config
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound="BaseConfiguration")
 

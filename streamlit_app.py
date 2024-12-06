@@ -1,15 +1,20 @@
+from dotenv import load_dotenv
 import streamlit as st
+
 from auth.register import register_user
 from auth.Login import login
 from auth.Logout import logout
+
 from features.how_to_guide_page import how_to_guide_interface
 from features.error_handling_page import error_handling_interface
+from logging_module.logging_config import setup_logging
+
+logger = setup_logging()
+load_dotenv()
 
 # Landing page function
 def landing_page():
     st.title("🐍 Python Library Coding Agent")
-    
-    # Add a descriptive section about the app
 
     # Main description
     st.markdown("""

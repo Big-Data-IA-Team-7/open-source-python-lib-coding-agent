@@ -1,11 +1,10 @@
 import os
 import snowflake.connector
-from dotenv import load_dotenv
 from snowflake.connector.errors import Error as SnowflakeError
 from typing import Optional
+import logging
 
-# Load environment variables from .env file
-load_dotenv()
+logger = logging.getLogger(__name__)
 
 # Get Snowflake credentials from environment variables
 SNOWFLAKE_USER = os.getenv("SNOWFLAKE_USER")
@@ -34,6 +33,7 @@ def validate_snowflake_credentials() -> tuple[bool, str]:
     missing_credentials = [key for key, value in required_credentials.items() if not value]
     
     if missing_credentials:
+        logger.warning("Missing required Snowflake credentials")
         return False, f"Missing required Snowflake credentials: {', '.join(missing_credentials)}"
     return True, ""
 
@@ -47,6 +47,7 @@ def snowflake_connection() -> Optional[snowflake.connector.SnowflakeConnection]:
         # First validate all credentials are present
         is_valid, error_message = validate_snowflake_credentials()
         if not is_valid:
+            logger.error(error_message)
             raise ValueError(error_message)
             
         # Attempt to establish connection
@@ -72,22 +73,28 @@ def snowflake_connection() -> Optional[snowflake.connector.SnowflakeConnection]:
         
     except ValueError as ve:
         # Handle missing credentials error
+        logger.error(f"Configuration error: {str(ve)}")
         raise ValueError(f"Configuration error: {str(ve)}")
     
     except SnowflakeError as se:
         # Handle Snowflake-specific errors
         error_code = getattr(se, 'errno', 'Unknown')
         if '250001' in str(se):
+            logger.error(f"Invalid Snowflake account: {SNOWFLAKE_ACCOUNT}")
             raise ConnectionError(f"Invalid Snowflake account: {SNOWFLAKE_ACCOUNT}")
         elif '251001' in str(se):
+            logger.error("Invalid credentials. Please check username and password.")
             raise ConnectionError("Invalid credentials. Please check username and password.")
         elif '250006' in str(se):
+            logger.error(f"Invalid database, warehouse, schema, or role. Error code: {error_code}")
             raise ConnectionError(f"Invalid database, warehouse, schema, or role. Error code: {error_code}")
         else:
+            logger.error(f"Snowflake connection error: {str(se)}. Error code: {error_code}")
             raise ConnectionError(f"Snowflake connection error: {str(se)}. Error code: {error_code}")
             
     except Exception as e:
         # Handle any other unexpected errors
+        logger.error(f"Unexpected error while connecting to Snowflake: {str(e)}")
         raise Exception(f"Unexpected error while connecting to Snowflake: {str(e)}")
         
     finally:
@@ -105,4 +112,5 @@ def close_connection(conn: Optional[snowflake.connector.SnowflakeConnection]) ->
         try:
             conn.close()
         except Exception as e:
+            logger.error(f"Error closing Snowflake connection: {str(e)}")
             raise Exception(f"Error closing Snowflake connection: {str(e)}")
