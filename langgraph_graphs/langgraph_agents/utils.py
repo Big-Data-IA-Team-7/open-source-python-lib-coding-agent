@@ -4,6 +4,17 @@ import boto3
 import os
 import uuid
 
+from serpapi import GoogleSearch
+import time
+from urllib.parse import urlparse
+import requests
+from bs4 import BeautifulSoup
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 from langchain_core.documents import Document
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
@@ -262,3 +273,43 @@ def reduce_codes(
                 existing_list.append(code_tuple)
     
     return existing_list
+
+
+
+def web_search(query: str):
+    """Finds general knowledge information using Google search."""
+    SERPAPI_KEY=os.getenv('SERPAPI_KEY')
+
+    SERPAPI_PARAMS = { "engine": "google",
+    "api_key": SERPAPI_KEY,}
+    search = GoogleSearch({
+        **SERPAPI_PARAMS,
+        "q": query,
+        "num": 5
+    })
+    results = search.get_dict().get("organic_results", [])  # Ensure we extract "organic_results"
+    return results
+
+
+def scrape_url(url: str) -> str:
+    try:
+        response = requests.get(url)
+        response.raise_for_status() 
+        soup = BeautifulSoup(response.text, 'html.parser')
+        return soup.get_text(separator='\n', strip=True)
+    except Exception as e:
+        print(f"Error scraping {url}: {e}")
+        return ""
+    
+def extract_domain(url: str) -> str:
+    """Extracts the second-level domain name from a given URL."""
+    try:
+        parsed_url = urlparse(url)
+        domain_parts = parsed_url.netloc.split('.')  # Split the domain into parts
+        if len(domain_parts) > 1:
+            return domain_parts[-2]  # Returns 'justanswer' from 'www.justanswer.com'
+        else:
+            return parsed_url.netloc  # If no subdomains exist, just return the netloc
+    except Exception as e:
+        print(f"Error extracting domain: {e}")
+        return ""

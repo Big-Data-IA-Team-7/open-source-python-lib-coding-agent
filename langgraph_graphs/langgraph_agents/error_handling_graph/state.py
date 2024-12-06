@@ -27,7 +27,7 @@ class InputState:
 class AgentState(InputState):
     """State of the retieval graph / agent."""
 
-    web_search: list[str] = field(default_factory=list)
+    web_search: str = field(default_factory=list)
     """The list of web search urls and information obtained from the web search agent."""
     documents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
     """Populated by the retriever. This is a list of documents that the agent can reference."""

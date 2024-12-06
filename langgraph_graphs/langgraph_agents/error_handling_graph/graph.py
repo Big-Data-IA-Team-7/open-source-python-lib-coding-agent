@@ -3,7 +3,7 @@ from typing import Any
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import START, StateGraph, END
 
-from langgraph_graphs.langgraph_agents.utils import load_chat_model, format_docs_code
+from langgraph_graphs.langgraph_agents.utils import load_chat_model, format_docs_code, web_search, scrape_url
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph.graph import graph as researcher_graph
 from langgraph_graphs.langgraph_agents.error_handling_graph.state import AgentState, InputState
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.configuration import AgentConfiguration
@@ -20,7 +20,21 @@ async def conduct_web_search(state: AgentState) -> dict[str, Any]:
         dict[str, list[str]]: A list of urls from the web search containing the information about the error
     """
     # Handle web search logic here.
-    response = 1
+    state.query  = f"Correct this code: {state.code}. Error: {state.error}."
+    # Perform the search using SerpAPI
+    search_results = web_search(state.query)
+    print("Search Result URLs:")
+    urls = [result['link'] for result in search_results]  # Get URLs from the results
+    for url in urls:
+        print(url)
+    
+    # Scrape content from the URLs
+    scraped_contents = []
+    for url in urls:
+        scraped_content = scrape_url(url)
+        scraped_contents.append(scraped_content)
+    search_content = "\n\n".join(scraped_contents)
+    response = search_content
     return {"web_search": response, "query": state.messages[-1].content}
 
 async def conduct_research(state: AgentState) -> dict[str, Any]:

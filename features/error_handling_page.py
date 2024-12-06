@@ -1,7 +1,8 @@
 import streamlit as st
 import traceback
 from utils.api_helpers import stream_error_handling
-
+import time 
+from langgraph_graphs.langgraph_agents.utils import web_search, extract_domain
 def error_handling_interface():
     try:
         # Error handling for session state initialization
@@ -77,11 +78,36 @@ def error_handling_interface():
                 {error_message}
                 ```
                 """
-
                 # Display user message
                 with st.chat_message("user"):
                     st.markdown(user_query)
                 st.session_state['history'].append({"role": "user", "content": user_query})
+                with st.spinner("Searching...Please wait."):
+                    time.sleep(3)
+                    results = web_search(error_message)
+                # Display search results
+                if results:  # Checking if results is not empty
+                    st.write("### Sources:")
+                    # Create columns based on the number of results
+                    cols = st.columns(len(results))
+                    for col, result in zip(cols, results):
+                        with col:
+                            title = result.get("title", "No Title")
+                            link = result.get("link", "#")
+                            favicon = result.get("favicon", None)  # Extract the favicon URL
+                            domain = extract_domain(link)
+                            
+                            # Display the title and link
+                            st.markdown(f"**[{title}]({link})**")
+                            
+                            # Ensure the image and text are aligned within one consistent column
+                            if favicon:
+                                st.image(favicon,width=50) 
+                                st.write(f"**{domain}**")
+                            else:
+                                st.write("No favicon available.")
+                else:
+                    st.write("No results found.")
 
                 # Call API and display streaming response
                 with st.chat_message("assistant"):
