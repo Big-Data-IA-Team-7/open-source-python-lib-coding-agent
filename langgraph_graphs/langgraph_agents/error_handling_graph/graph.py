@@ -17,7 +17,7 @@ async def conduct_web_search(state: AgentState) -> dict[str, Any]:
         state (AgentState): The current state of the agent.
 
     Returns:
-        dict[str, list[str]]: A list of urls from the web search containing the information about the error
+        dict[str, str]: The content of the urls from the web search containing the information about the error
     """
     # Handle web search logic here.
     state.query  = f"Correct this code: {state.code}. Error: {state.error}."
@@ -34,8 +34,7 @@ async def conduct_web_search(state: AgentState) -> dict[str, Any]:
         scraped_content = scrape_url(url)
         scraped_contents.append(scraped_content)
     search_content = "\n\n".join(scraped_contents)
-    response = search_content
-    return {"web_search": response, "query": state.messages[-1].content}
+    return {"web_search": search_content, "query": state.messages[-1].content}
 
 async def conduct_research(state: AgentState) -> dict[str, Any]:
     """Execute the first step of the research plan.
@@ -75,12 +74,12 @@ async def handle_error(
         task=state.task,
         code=state.code,
         error=state.error,
-        context=context
+        context=context,
+        web_search=state.web_search
     )
 
     messages = [{"role": "system", "content": prompt}] + state.messages
     response = await model.ainvoke(messages)
-    print(response.content)
     return {"answer": response.content}
 
 builder = StateGraph(AgentState, input=InputState, config_schema=AgentConfiguration)
@@ -94,4 +93,5 @@ builder.add_edge("conduct_research", "handle_error")
 builder.add_edge("handle_error", END)
 
 graph = builder.compile()
+print("Builder Nodes:", builder.nodes)
 graph.name = "ErrorHandlingGraph"

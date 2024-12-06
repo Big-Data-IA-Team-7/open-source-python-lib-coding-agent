@@ -30,6 +30,9 @@ GENERAL_SYSTEM_PROMPT = (
 RESPONSE_SYSTEM_PROMPT = (
     hub.pull("qa-documentation-response-prompt").messages[0].prompt.template
 )
+# EH_RESPONSE_SYSTEM_PROMPT = (
+#     hub.pull("error-handling-response-prompt").messages[0].prompt.template
+# )
 EH_RESPONSE_SYSTEM_PROMPT = (
-    hub.pull("error-handling-response-prompt").messages[0].prompt.template
+    hub.pull("version1-eh-response-prompt").messages[0].prompt.template
 )

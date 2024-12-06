@@ -78,10 +78,7 @@ def error_handling_interface():
                 {error_message}
                 ```
                 """
-                # Display user message
-                with st.chat_message("user"):
-                    st.markdown(user_query)
-                st.session_state['history'].append({"role": "user", "content": user_query})
+
                 with st.spinner("Searching...Please wait."):
                     time.sleep(3)
                     results = web_search(error_message)
