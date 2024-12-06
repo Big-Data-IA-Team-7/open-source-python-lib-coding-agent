@@ -2,7 +2,8 @@ import streamlit as st
 from auth.register import register_user
 from auth.Login import login
 from auth.Logout import logout
-from features.code_generation_page import safe_chat_interface 
+from features.how_to_guide_page import how_to_guide_interface
+from features.error_handling_page import error_handling_interface
 
 # Landing page function
 def landing_page():
@@ -66,8 +67,10 @@ elif st.session_state.current_page == 'login':
     login()
 elif st.session_state.current_page == 'register':
     register_user()
-elif st.session_state.logged_in and st.session_state.current_page == 'code_generation':
-    safe_chat_interface()
+elif st.session_state.logged_in and st.session_state.current_page == 'how_to_guide':
+    how_to_guide_interface()
+elif st.session_state.logged_in and st.session_state.current_page == 'error_handling':
+    error_handling_interface()
 elif st.session_state.current_page == 'logout':  # Handle logout page
     logout()
     if 'logged_in' not in st.session_state:  # After logout completes
@@ -79,8 +82,12 @@ if st.session_state.logged_in:
     with st.sidebar:
         st.title(f"Welcome, {st.session_state.get('user_name', 'User')}")
         
-        if st.button("💬 Chat Interface"):
-            st.session_state.current_page = 'code_generation'
+        if st.button("📖 How-to Guide"):
+            st.session_state.current_page = 'how_to_guide'
+            st.rerun()
+
+        if st.button("🚨 Error Handling"):
+            st.session_state.current_page = 'error_handling'
             st.rerun()
             
         if st.button("🚪 Logout"):

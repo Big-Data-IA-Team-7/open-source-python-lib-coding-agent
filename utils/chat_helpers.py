@@ -82,7 +82,17 @@ def process_stream(line: str):
                         processed_content = preprocess_content(message_content)
                         st.markdown(processed_content)
                         return processed_content
-                
+                elif "'handle_error'" in current_chunk:
+                        try:
+                            data = eval(current_chunk)
+                            error_content = data.get('handle_error', {}).get('answer', '')
+                            if error_content:
+                                processed_content = preprocess_content(error_content)
+                                st.markdown(processed_content)
+                                return processed_content
+                        except Exception as e:
+                            st.error(f"Error processing handle_error: {e}")
+                                    
             except Exception as e:
                 st.error(f"Exception occurred in main processing: {e}")
                 return None

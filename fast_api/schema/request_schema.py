@@ -34,6 +34,12 @@ class UserRegister(BaseModel):
         description="The user's password, must be at least 6 characters long"
     )
 
-class ChatRequest(BaseModel):
+class HowToRequest(BaseModel):
     query: str
+    history: List[Dict[str, str]] = []
+
+class ErrorRequest(BaseModel):
+    task: str
+    code: str
+    error: str
     history: List[Dict[str, str]] = []
