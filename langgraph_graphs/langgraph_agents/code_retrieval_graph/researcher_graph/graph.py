@@ -5,12 +5,12 @@ which is responsible for generating search queries and retrieving relevant docum
 """
 
 from typing import cast
+from typing_extensions import TypedDict
 
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig
 from langgraph.constants import Send
 from langgraph.graph import END, START, StateGraph
-from typing_extensions import TypedDict
 from langchain_community.utilities import SQLDatabase
 
 from langgraph_graphs import retrieval

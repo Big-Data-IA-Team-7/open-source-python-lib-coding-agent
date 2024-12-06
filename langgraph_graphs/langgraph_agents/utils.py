@@ -3,6 +3,7 @@ import re
 import boto3
 import os
 import uuid
+import logging
 
 from serpapi import GoogleSearch
 import time
@@ -18,6 +19,8 @@ load_dotenv()
 from langchain_core.documents import Document
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
+
+logger = logging.getLogger(__name__)
 
 def _format_doc(doc: Document) -> str:
     """Format a single document as XML.
@@ -74,7 +77,7 @@ def replace_s3_locations_with_content(docs: List[Document]) -> List[Document]:
                 doc.page_content = doc.page_content.replace(s3_location, file_content)
             
             except Exception as e:
-                print(f"Error processing {s3_location}: {e}")
+                logger.error(f"Error processing {s3_location}: {e}")
     
     return docs
 

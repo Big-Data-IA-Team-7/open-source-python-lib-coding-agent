@@ -1,28 +1,28 @@
-from dotenv import load_dotenv
-load_dotenv()
-
 import os
 from contextlib import contextmanager
 from typing import Iterator
+import logging
 
 from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import RunnableConfig
 from langchain_pinecone import PineconeVectorStore
+from langchain_openai import OpenAIEmbeddings
 
 from langgraph_graphs.langgraph_agents.configuration import BaseConfiguration
 from langgraph_graphs.constants import PINECONE_DOCS_INDEX_NAME
 
+logger = logging.getLogger(__name__)
 
 def make_text_encoder(model: str) -> Embeddings:
     """Connect to the configured text encoder."""
     provider, model = model.split("/", maxsplit=1)
     match provider:
         case "openai":
-            from langchain_openai import OpenAIEmbeddings
 
             return OpenAIEmbeddings(model=model)
         case _:
+            logger.error(f"Unsupported embedding provider: {provider}")
             raise ValueError(f"Unsupported embedding provider: {provider}")
 
 ''' The Context Manager decorator is meant for automatic resource management, im this case,
@@ -61,6 +61,7 @@ def make_retriever(
 
         case _:
             # Handle unsupported retriever providers
+            logger.error("Unrecognized retriever_provider in configuration.")
             raise ValueError(
                 "Unrecognized retriever_provider in configuration. "
                 f"Expected one of: {', '.join(BaseConfiguration.__annotations__['retriever_provider'].__args__)}\n"

@@ -1,9 +1,14 @@
 import asyncio
+import logging
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import StreamingResponse
+
 from fast_api.services.auth_service import get_current_user
 from fast_api.schema.request_schema import HowToRequest, ErrorRequest
+
 from langgraph_graphs.langgraph_agents.error_handling_graph.graph import graph
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -31,11 +36,11 @@ async def generate_code(
                     yield f"data: {str(chunk)}\n\n"
                     
             except asyncio.CancelledError:
-                print(f"Stream cancelled by user: {current_user.get('USERNAME')}")
-                print(asyncio.CancelledError)
+                logger.error(f"Stream cancelled by user: {current_user.get('USERNAME')}")
+                logger.error(asyncio.CancelledError)
                 raise
             except Exception as e:
-                print(f"Stream generation error for user {current_user.get('USERNAME')}: {str(e)}")
+                logger.error(f"Stream generation error for user {current_user.get('USERNAME')}: {str(e)}")
                 yield f"data: Error during code generation: {str(e)}\n\n"
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -55,7 +60,7 @@ async def generate_code(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Unexpected error in generate_code for user {current_user.get('USERNAME')}: {str(e)}")
+        logger.error(f"Unexpected error in generate_code for user {current_user.get('USERNAME')}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred"
@@ -88,11 +93,11 @@ async def handle_error(
                     yield f"data: {str(chunk)}\n\n"
                     
             except asyncio.CancelledError:
-                print(f"Stream cancelled by user: {current_user.get('USERNAME')}")
-                print(asyncio.CancelledError)
+                logger.error(f"Stream cancelled by user: {current_user.get('USERNAME')}")
+                logger.error(asyncio.CancelledError)
                 raise
             except Exception as e:
-                print(f"Stream generation error for user {current_user.get('USERNAME')}: {str(e)}")
+                logger.error(f"Stream generation error for user {current_user.get('USERNAME')}: {str(e)}")
                 yield f"data: Error during code generation: {str(e)}\n\n"
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -112,7 +117,7 @@ async def handle_error(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Unexpected error in handle_error for user {current_user.get('USERNAME')}: {str(e)}")
+        logger.error(f"Unexpected error in handle_error for user {current_user.get('USERNAME')}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred"

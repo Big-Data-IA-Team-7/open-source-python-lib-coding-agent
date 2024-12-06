@@ -3,17 +3,18 @@ import base64
 import hmac
 import hashlib
 import jwt
+import logging
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime, timedelta, timezone
-from fast_api.services.user_service import fetch_user
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+from fast_api.services.user_service import fetch_user
+
+logger = logging.getLogger(__name__)
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
+    logger.error("SECRET_KEY environment variable is not set")
     raise ValueError("SECRET_KEY environment variable is not set")
 
 security = HTTPBearer()
@@ -21,8 +22,10 @@ security = HTTPBearer()
 def password_hashing(password: str):
     """Hash the password for security."""
     if not isinstance(password, str):
+        logger.error("Password must be a string")
         raise ValueError("Password must be a string")
     if not password:
+        logger.error("Password cannot be empty")
         raise ValueError("Password cannot be empty")
         
     try:
@@ -39,8 +42,10 @@ def password_hashing(password: str):
 def create_jwt_token(data: dict):
     """Create a JWT token."""
     if not isinstance(data, dict):
+        logger.error("Data must be a dictionary")
         raise ValueError("Data must be a dictionary")
     if not data:
+        logger.error("Data dictionary cannot be empty")
         raise ValueError("Data dictionary cannot be empty")
         
     try:
@@ -57,8 +62,10 @@ def create_jwt_token(data: dict):
 def decode_jwt_token(token: str):
     """Decode and verify a JWT token."""
     if not isinstance(token, str):
+        logger.error("Token must be a string")
         raise ValueError("Token must be a string")
     if not token:
+        logger.error("Token cannot be empty")
         raise ValueError("Token cannot be empty")
         
     try:

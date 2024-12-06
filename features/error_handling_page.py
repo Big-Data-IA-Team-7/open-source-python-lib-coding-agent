@@ -3,7 +3,10 @@ import traceback
 from utils.api_helpers import stream_error_handling
 import time 
 from langgraph_graphs.langgraph_agents.utils import web_search, extract_domain
+import logging
+
 def error_handling_interface():
+    logger = logging.getLogger(__name__)
     try:
         # Error handling for session state initialization
         if 'history' not in st.session_state:
@@ -15,6 +18,7 @@ def error_handling_interface():
         if 'last_error' not in st.session_state:
             st.session_state['last_error'] = None
         if 'token' not in st.session_state:
+            logger.info("Please log in first")
             st.error("Please log in first")
             return
 
@@ -57,6 +61,7 @@ def error_handling_interface():
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
         except Exception as history_error:
+            logger.warning("Error displaying chat history. The history may be reset.")
             st.warning("Error displaying chat history. The history may be reset.")
             st.session_state['history'] = []
 
@@ -131,12 +136,15 @@ def error_handling_interface():
                         
                     except Exception as stream_error:
                         if "Stream cancelled by user" in str(stream_error):
+                            logger.warning("Analysis was cancelled.")
                             message_placeholder.warning("Analysis was cancelled.")
                         else:
+                            logger.error(f"Error processing response: {str(stream_error)}")
                             message_placeholder.error(f"Error processing response: {str(stream_error)}")
                         return
 
             except Exception as response_error:
+                logger.error("An error occurred while processing your request.")
                 st.error("An error occurred while processing your request.")
                 st.session_state['last_error'] = {
                     'type': type(response_error).__name__,
@@ -154,11 +162,13 @@ def error_handling_interface():
             with col1:
                 if st.button("Yes", key="feedback_positive", disabled=st.session_state.get('feedback_given', False)):
                     st.session_state['feedback_given'] = True
+                    logger.info("Thank you for your feedback!")
                     st.success("Thank you for your feedback!")
 
             with col2:
                 if st.button("No", key="feedback_negative", disabled=st.session_state.get('feedback_given', False)):
                     st.session_state['feedback_given'] = True
+                    logger.info("We're sorry the solution didn't help. Our team will work on improving.")
                     st.error("We're sorry the solution didn't help. Our team will work on improving.")
 
         # Clear chat button
@@ -178,6 +188,7 @@ def error_handling_interface():
                 st.text_area("Detailed Traceback:", value=error['traceback'], height=200)
 
     except Exception as e:
+        logger.error(f"Critical Error. Error details: {str(e)}")
         st.error("A critical error occurred. Please refresh the page.")
         st.error(f"Error details: {str(e)}")
         st.text_area("Error Traceback:", value=traceback.format_exc(), height=200)
