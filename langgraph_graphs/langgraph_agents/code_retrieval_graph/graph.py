@@ -1,4 +1,5 @@
 from typing import Any, TypedDict, cast, Literal
+import logging
 
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import BaseMessage
@@ -8,6 +9,8 @@ from langgraph_graphs.langgraph_agents.utils import load_chat_model, format_docs
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph.graph import graph as researcher_graph
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.state import AgentState, InputState
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.configuration import AgentConfiguration
+
+logger = logging.getLogger(__name__)
 
 async def conduct_research(state: AgentState) -> dict[str, Any]:
     """Execute the first step of the research plan.
@@ -23,7 +26,9 @@ async def conduct_research(state: AgentState) -> dict[str, Any]:
     """
     result = await researcher_graph.ainvoke({"question": state.steps[0]})
 
-    return {"documents": result["documents"], "code": result["code"], "steps": state.steps[1:]}
+    logger.debug(f"Result: {result}")
+
+    return {"documents": result["documents"], "code": result["library_code"], "steps": state.steps[1:]}
 
 async def create_research_plan(
     state: AgentState, *, config: RunnableConfig
@@ -94,6 +99,9 @@ async def respond(
     prompt = configuration.response_system_prompt.format(context=context)
     messages = [{"role": "system", "content": prompt}] + state.messages
     response = await model.ainvoke(messages)
+
+    logger.debug(f"Response: {response}")
+
     return {"messages": [response], "answer": response.content}
 
 builder = StateGraph(AgentState, input=InputState, config_schema=AgentConfiguration)
