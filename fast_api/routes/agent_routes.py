@@ -6,7 +6,8 @@ from fastapi.responses import StreamingResponse
 from fast_api.services.auth_service import get_current_user
 from fast_api.schema.request_schema import HowToRequest, ErrorRequest
 
-from langgraph_graphs.langgraph_agents.error_handling_graph.graph import graph
+from langgraph_graphs.langgraph_agents.error_handling_graph.graph import graph as eh_graph
+from langgraph_graphs.langgraph_agents.code_retrieval_graph.graph import graph as htg_graph
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ async def generate_code(
             try:
                 messages = request.history + [{"role": "user", "content": request.query}]
                 
-                async for chunk in graph.astream({"messages": messages}):
+                async for chunk in htg_graph.astream({"messages": messages}):
                     # Ensure we're sending text/event-stream format correctly
                     yield f"data: {str(chunk)}\n\n"
                     
@@ -84,7 +85,7 @@ async def handle_error(
         async def generate():
             try:
                 messages = request.history + [{"role": "user", "content": request.task + request.code + request.error}]
-                async for chunk in graph.astream({
+                async for chunk in eh_graph.astream({
                     "task": request.task,
                     "code": request.code,
                     "error": request.error,
