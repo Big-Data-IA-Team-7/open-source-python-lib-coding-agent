@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
+from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 from data_load.scrape_url import load_recursive_url
 from data_load.process_docs import process_content
@@ -42,8 +42,7 @@ with DAG(
     store_task = PythonOperator(
         task_id='store_to_pinecone_task',
         python_callable=store_to_pinecone,
-        provide_context=True,  # Important for XCom
-        #op_kwargs={'input_dir': 'langgraph_code_extracts'},
+        provide_context=True,  # Important for XCo
     )
 
     # Define task dependencies

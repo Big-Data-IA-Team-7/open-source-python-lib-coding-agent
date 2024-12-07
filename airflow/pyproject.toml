@@ -18,6 +18,13 @@ langgraph = "^0.2.45"
 boto3 = "^1.35.61"
 snowflake-connector-python = "^3.12.3"
 markdown = "^3.7"
+apache-airflow = "^2.10.3"
+openai = "^1.57.0"
+pinecone-client = "^5.0.1"
+langchain-core = "^0.3.22"
+bs4 = "^0.0.2"
+langchain-community = "^0.3.10"
+gitpython = "^3.1.43"
 
 
 [build-system]

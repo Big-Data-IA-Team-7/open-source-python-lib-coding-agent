@@ -1,5 +1,4 @@
 import os
-import json
 import hashlib
 from bs4 import BeautifulSoup
 from langchain_core.documents import Document
@@ -71,7 +70,12 @@ def process_content(**kwargs):
         # Create document
         full_doc = Document(
             page_content=clean_text, 
-            metadata=doc['metadata']
+            metadata={
+                'title': doc['metadata'].get('title', 'Untitled'),
+                'source': doc['metadata'].get('source', ''),
+                'description': doc['metadata'].get('description', 'No description available'),
+                **doc['metadata']  # Include any additional metadata
+            }
         )
         full_docs.append(full_doc)
     

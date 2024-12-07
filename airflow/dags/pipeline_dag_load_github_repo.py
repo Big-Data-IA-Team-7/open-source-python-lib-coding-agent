@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
+from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 from data_load.process_github_repo.repo_clone import clone_repo
 from data_load.process_github_repo.extract_code import extract_structures_from_repo
