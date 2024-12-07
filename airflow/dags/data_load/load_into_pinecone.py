@@ -61,8 +61,19 @@ def store_to_pinecone(**kwargs):
         chunk_size=10000, 
         chunk_overlap=200
     )
-    text_docs = [doc.page_content for doc in full_docs]
-    split_docs = text_splitter.create_documents(text_docs)
+    split_docs = []
+    for doc in full_docs:
+        splits = text_splitter.split_text(doc.page_content)
+        split_docs.extend([
+            Document(
+                page_content=split,
+                metadata={
+                    'title': doc.metadata.get('title', 'Untitled'),
+                    'source': doc.metadata.get('source', ''),
+                    'description': doc.metadata.get('description', 'No description available'),
+                }
+            ) for split in splits
+        ])
     
     # Add documents to the Pinecone vector store
     vector_store = PineconeVectorStore(
