@@ -28,7 +28,7 @@ async def conduct_research(state: AgentState) -> dict[str, Any]:
 
     logger.debug(f"Result: {result}")
 
-    return {"documents": result["documents"], "code": result["library_code"], "steps": state.steps[1:]}
+    return {"documents": result["documents"], "code": result["library_code"], "steps": state.steps[1:], "current_step": state.steps[0]}
 
 async def create_research_plan(
     state: AgentState, *, config: RunnableConfig
@@ -95,6 +95,7 @@ async def respond(
     configuration = AgentConfiguration.from_runnable_config(config)
     model = load_chat_model(configuration.response_model)
     top_k = 20
+    logger.debug(f"Top 20 Documents: {state.documents[:top_k]}")
     context = format_docs_code(docs=state.documents[:top_k], code=state.code)
     prompt = configuration.response_system_prompt.format(context=context)
     messages = [{"role": "system", "content": prompt}] + state.messages

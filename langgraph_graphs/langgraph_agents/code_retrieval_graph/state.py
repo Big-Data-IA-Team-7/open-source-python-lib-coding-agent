@@ -30,6 +30,9 @@ class AgentState(InputState):
     answer: str = field(default="")
     """Final answer. Useful for evaluations"""
     query: str = field(default="")
+    """Original Query user sent it."""
+    current_step: str = field(default="")
+    """The current step in the research plan"""
 
 
 
