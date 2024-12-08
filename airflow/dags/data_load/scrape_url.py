@@ -34,10 +34,10 @@ def load_recursive_url(**kwargs):
     # Create the loader with metadata extraction
     loader = RecursiveUrlLoader(
         "https://langchain-ai.github.io/langgraph/",
-        max_depth=2,
+        max_depth=5,
         prevent_outside=True,
         extractor=extract_with_metadata,
-        base_url="https://langchain-ai.github.io/langgraph/"
+        base_url="https://langchain-ai.github.io/"
     )
     
     # Load the documents
