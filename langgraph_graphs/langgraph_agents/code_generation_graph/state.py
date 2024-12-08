@@ -39,5 +39,5 @@ class AgentState(InputState):
     """Populated by the readme generation agent. This contains the readme content to push to GitHub."""
     feedback_content: str = field(default="")
     """Feedback provided. This is the feedback provided by the LLM for the generated code."""
-    threshold: int = field(default=0)  # Changed to a default integer value
+    feedback_value: int = field(default=0)  # Changed to a default integer value
     """Threshold for the loop. This is the threshold calculated by the LLM."""
