@@ -7,11 +7,7 @@ from auth.Logout import logout
 
 from features.how_to_guide_page import how_to_guide_interface
 from features.error_handling_page import error_handling_interface
-from logging_module.logging_config import setup_logging
-
-logger = setup_logging()
-load_dotenv()
-
+from features.github_repo_page import github_commit_app
 # Landing page function
 def landing_page():
     st.title("🐍 Python Library Coding Agent")
@@ -76,6 +72,8 @@ elif st.session_state.logged_in and st.session_state.current_page == 'how_to_gui
     how_to_guide_interface()
 elif st.session_state.logged_in and st.session_state.current_page == 'error_handling':
     error_handling_interface()
+elif st.session_state.logged_in and st.session_state.current_page == 'github':
+    github_commit_app()
 elif st.session_state.current_page == 'logout':  # Handle logout page
     logout()
     if 'logged_in' not in st.session_state:  # After logout completes
@@ -94,7 +92,11 @@ if st.session_state.logged_in:
         if st.button("🚨 Error Handling"):
             st.session_state.current_page = 'error_handling'
             st.rerun()
-            
+        
+        if st.button("🚀 GitHub Commit"):
+            st.session_state.current_page = 'github'
+            st.rerun()
+
         if st.button("🚪 Logout"):
             st.session_state.current_page = 'logout'
             st.rerun()
