@@ -28,7 +28,7 @@ async def conduct_research(state: AgentState) -> dict[str, Any]:
     """
     result = await researcher_graph.ainvoke({"question": state.steps[0]})
 
-    return {"documents": result["documents"], "github_code": result["code"], "steps": state.steps[1:]}
+    return {"documents": result["documents"], "code": result["library_code"], "steps": state.steps[1:]}
 
 
 
@@ -68,7 +68,7 @@ async def create_research_plan(
 
 
 
-def check_finished(state: AgentState) -> Literal["respond", "conduct_research"]:
+def check_finished(state: AgentState) -> Literal["generate_code", "conduct_research"]:
     """Determine if the research process is complete or if more research is needed.
 
     This function checks if there are any remaining steps in the research plan:
@@ -79,7 +79,7 @@ def check_finished(state: AgentState) -> Literal["respond", "conduct_research"]:
         state (AgentState): The current state of the agent, including the remaining research steps.
 
     Returns:
-        Literal["respond", "conduct_research"]: The next step to take based on whether research is complete.
+        Literal["generate_code", "conduct_research"]: The next step to take based on whether research is complete.
     """
     if len(state.steps or []) > 0:
         return "conduct_research"
@@ -105,7 +105,7 @@ async def generate_code(
     configuration = AgentConfiguration.from_runnable_config(config)
     model = load_chat_model(configuration.response_model)
     top_k = 20
-    context = format_docs_code(docs=state.documents[:top_k], code=state.github_code)
+    context = format_docs_code(docs=state.documents[:top_k], code=state.code)
     prompt = configuration.code_generation_system_prompt.format(context=context)
     messages = [{"role": "system", "content": prompt}] + state.messages
     response = await model.ainvoke(messages)
@@ -173,7 +173,7 @@ async def evaluate_code(
     configuration = AgentConfiguration.from_runnable_config(config)
     model = load_chat_model(configuration.response_model)
     top_k = 10
-    context = format_docs_code(docs=state.documents[:top_k], code=state.github_code)
+    context = format_docs_code(docs=state.documents[:top_k], code=state.code)
     prompt = configuration.code_evaluation_system_prompt.format(
         context=context,
         code=state.code_generated, 
@@ -224,7 +224,7 @@ def decision_loop(state: AgentState) -> Literal["send_response", "generate_code"
 
 def send_response(state: AgentState) -> dict[str, Any]:
     return {
-        "code": state.code_generated,
+        "code_generated": state.code_generated,
         "requirements": state.requirements,
         "readme": state.readme_content
     }
@@ -237,6 +237,7 @@ builder.add_node(generate_requirements_txt)
 builder.add_node(generate_readme_md)
 builder.add_node(evaluate_code)
 builder.add_node(judge_evaluation)
+builder.add_node(send_response)
 
 builder.add_edge(START, "create_research_plan")
 builder.add_edge("create_research_plan", "conduct_research")
@@ -246,7 +247,21 @@ builder.add_edge("generate_requirements_txt", "generate_readme_md")
 builder.add_edge("generate_readme_md", "evaluate_code")
 builder.add_edge("evaluate_code", "judge_evaluation")
 builder.add_conditional_edges("judge_evaluation", decision_loop)
-builder.add_edge(send_response, END)
+builder.add_edge("send_response", END)
 
 graph = builder.compile()
 graph.name = "CodeGenerationGraph"
+
+
+
+async def run_graph():
+    """Run the graph with a user query."""
+    result = await graph.ainvoke({
+        "messages": [{"role": "user", "content": "Build an RAG application using Langgraph to build a chatbot for Boston flight company"}]
+    })
+    print(result['code_generated'])
+
+import asyncio
+
+asyncio.run(run_graph())
+

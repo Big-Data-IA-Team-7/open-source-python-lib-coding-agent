@@ -25,7 +25,7 @@ class AgentState(InputState):
     """A list of steps in the research plan."""
     documents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
     """Populated by the retriever. This is a list of documents that the agent can reference."""
-    github_code: Annotated[list[tuple[str, ...]], reduce_codes] = field(default_factory=list)
+    code: Annotated[list[tuple[str, ...]], reduce_codes] = field(default_factory=list)
     """Populated by the retriever. This is a list of code blocks that the agent can reference."""
     answer: str = field(default="")
     """Final answer. Useful for evaluations."""
