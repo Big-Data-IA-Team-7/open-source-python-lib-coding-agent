@@ -16,7 +16,7 @@ def github_commit_app():
     repo_url = st.text_input("Enter GitHub Repository URL")
     file_name = st.text_input("File Name (e.g., app.py)")
     commit_message = st.text_input("Commit Message")
-    code_content = st.text_area("Write or edit your code below:", height=300, value="# Your Python code here\n")
+    code_content = st.text_area("Write or edit your code below:", height=300, placeholder="# Your Python code here\n")
 
     if st.button("Save, Commit, and Push"):
         if not repo_url or not file_name or not commit_message or not code_content:
