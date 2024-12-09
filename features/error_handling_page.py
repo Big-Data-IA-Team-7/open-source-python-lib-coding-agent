@@ -11,8 +11,8 @@ def error_handling_interface():
         # Error handling for session state initialization
         if 'history' not in st.session_state:
             st.session_state['history'] = []
-        if 'last_response' not in st.session_state:
-            st.session_state['last_response'] = None
+        if 'error_handler_response' not in st.session_state:
+            st.session_state['error_handler_response'] = None
         if 'feedback_given' not in st.session_state:
             st.session_state['feedback_given'] = False
         if 'last_error' not in st.session_state:
@@ -119,7 +119,7 @@ def error_handling_interface():
                         full_response = stream_error_handling(task, code, error_message, st.session_state['history'])
                         
                         if full_response:
-                            st.session_state['last_response'] = full_response
+                            st.session_state['error_handler_response'] = full_response
                             st.session_state['history'].append({
                                 "role": "assistant", 
                                 "content": full_response
@@ -128,7 +128,7 @@ def error_handling_interface():
                         else:
                             error_message = "Sorry, I couldn't analyze the error. Please try again."
                             message_placeholder.markdown(error_message)
-                            st.session_state['last_response'] = error_message
+                            st.session_state['error_handler_response'] = error_message
                             st.session_state['history'].append({
                                 "role": "assistant", 
                                 "content": error_message
@@ -153,7 +153,7 @@ def error_handling_interface():
                 }
 
         # Response Feedback Section
-        if st.session_state.get('last_response'):
+        if st.session_state.get('error_handler_response'):
             st.markdown("---")
             st.markdown("**Was this solution helpful?**")
             
@@ -174,7 +174,7 @@ def error_handling_interface():
         # Clear chat button
         if st.button("Clear Chat"):
             st.session_state['history'] = []
-            st.session_state['last_response'] = None
+            st.session_state['error_handler_response'] = None
             st.session_state['feedback_given'] = False
             st.rerun()
 
