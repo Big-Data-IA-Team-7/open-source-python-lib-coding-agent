@@ -74,15 +74,14 @@ def github_repo_management():
             })
             
             commit_result = response.json()
-            st.write(f"Commit result: {commit_result}")  # Show the entire result for debugging
             if "message" in commit_result:
                 st.success("Code committed and pushed successfully!")
             else:
                 st.error(f"Unexpected response: {commit_result}")
-
-    if st.button("← Back", type="secondary"):
-            st.session_state.current_page = 'code_generation'
-            st.rerun()
+    
+    # if st.button("← Back", type="secondary"):
+    #         st.session_state.current_page = 'code_generation'
+    #         st.rerun()
 
 
 
