@@ -24,10 +24,6 @@ def github_repo_management():
             max_tokens=300,
             temperature=0.7,
         )
-
-        # Print the entire response to debug the structure
-        st.write(response)
-
         # Check if 'choices' is in the response and has content
         if "choices" in response and len(response['choices']) > 0:
             generated_text = response.choices[0].message['content'].strip()

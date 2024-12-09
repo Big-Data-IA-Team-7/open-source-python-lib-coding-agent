@@ -33,6 +33,7 @@ def github_credentials():
             if st.button("Update GitHub Credentials"):
                 url = f"{FAST_API_URL}/git/update-github-credentials/{st.session_state.user_name}"
                 payload = {
+                    "username": st.session_state.user_name,
                     "github_username": github_username,
                     "git_token": github_token
                 }
