@@ -7,12 +7,15 @@ import logging
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv
 
+load_dotenv()
 from fast_api.services.user_service import fetch_user
 
 logger = logging.getLogger(__name__)
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+
 if not SECRET_KEY:
     logger.error("SECRET_KEY environment variable is not set")
     raise ValueError("SECRET_KEY environment variable is not set")
@@ -37,6 +40,26 @@ def password_hashing(password: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error during password hashing: {str(e)}"
+        )
+
+def token_hashing(token: str):
+    """Hash the GitHub token for security."""
+    if not isinstance(token, str):
+        logger.error("Token must be a string")
+        raise ValueError("Token must be a string")
+    if not token:
+        logger.error("Token cannot be empty")
+        raise ValueError("Token cannot be empty")
+        
+    try:
+        secret_key = base64.b64encode(SECRET_KEY.encode())
+        hash_object = hmac.new(secret_key, msg=token.encode(), digestmod=hashlib.sha256)
+        hash_hex = hash_object.hexdigest()
+        return hash_hex
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error during token hashing: {str(e)}"
         )
 
 def create_jwt_token(data: dict):

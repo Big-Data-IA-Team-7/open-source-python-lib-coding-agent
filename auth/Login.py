@@ -3,7 +3,8 @@ import os
 import requests
 from requests.exceptions import RequestException
 import logging
-
+from dotenv import load_dotenv
+load_dotenv()
 # Get the API URL from the environment variables
 FAST_API_URL = os.getenv("FAST_API_URL")
 

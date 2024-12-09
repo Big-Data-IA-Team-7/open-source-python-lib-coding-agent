@@ -4,7 +4,8 @@ import os
 import time
 import logging
 from requests.exceptions import RequestException
-
+from dotenv import load_dotenv
+load_dotenv()
 from utils.validate_fields import is_valid_username, is_valid_email, is_valid_password
 
 # Get the API URL from the environment variables

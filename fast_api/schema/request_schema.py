@@ -43,3 +43,32 @@ class ErrorRequest(BaseModel):
     code: str
     error: str
     history: List[Dict[str, str]] = []
+
+
+class GitHubCredentials(BaseModel):
+    username: str
+    token: str
+
+class RepoDetails(BaseModel):
+    repo_url: str
+    commit_message: str
+    file_name: str
+    code_content: str
+
+
+# # Request model
+# class UserLookupRequest(BaseModel):
+#     useremail: str
+
+
+# Request model for GitHub credential updates
+class GitHubCredentialsRequest(BaseModel):
+    username: str
+    github_username: str
+    git_token: str
+    
+class RepoRequest(BaseModel):
+    repo_url: str
+    file_name: str
+    code_content: str
+    commit_message: str
