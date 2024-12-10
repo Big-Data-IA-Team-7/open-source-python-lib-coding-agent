@@ -1,9 +1,9 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
-from data_load.scrape_url import load_recursive_url
-from data_load.process_docs import process_content
-from data_load.load_into_pinecone import store_to_pinecone
+from airflow.dags.data_load.process_documentation_pages.scrape_url import load_recursive_url
+from airflow.dags.data_load.process_documentation_pages.process_docs import process_content
+from airflow.dags.data_load.process_documentation_pages.load_into_pinecone import store_to_pinecone
 
 # Define default arguments for the DAG
 default_args = {
