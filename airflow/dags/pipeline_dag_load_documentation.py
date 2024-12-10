@@ -19,7 +19,7 @@ default_args = {
 
 # Define the DAG
 with DAG(
-    'langgraph_extraction_dag',
+    'documentation_extraction_dag',
     default_args=default_args,
     description='A DAG for extracting documentation pages, parsing files, storing them in AWS, and loading vector embeddings into Pinecone',
     schedule_interval=None,  # Trigger manually
@@ -42,7 +42,7 @@ with DAG(
         task_id='process_and_store_task',
         python_callable=process_content,
         op_kwargs={
-            'file_dir': 'llamaindex'
+            'file_dir': 'llamaindexdocs'
         },
         provide_context=True,  # Important for XCom
     )
@@ -52,7 +52,7 @@ with DAG(
         task_id='store_to_pinecone_task',
         python_callable=store_to_pinecone,
         op_kwargs={
-            'index_name': 'llamaindex'  # Pass the index name dynamically here
+            'index_name': 'llamaindexdocs'  # Pass the index name dynamically here
         },
         provide_context=True,  # Important for XCom
     )

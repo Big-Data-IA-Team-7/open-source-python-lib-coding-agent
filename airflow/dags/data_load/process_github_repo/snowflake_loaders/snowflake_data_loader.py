@@ -1,6 +1,7 @@
 import pandas as pd
 from typing import Dict
 import snowflake.connector
+import json
 from data_load.process_github_repo.snowflake_loaders.db_connection import snowflake_connection, close_connection
 
 def create_tables(conn: snowflake.connector.SnowflakeConnection) -> None:
@@ -96,7 +97,19 @@ def create_tables(conn: snowflake.connector.SnowflakeConnection) -> None:
             PRIMARY KEY (function_id)
         )
         """)
-        
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS GITHUB_CONSOLIDATED_NOTEBOOKS (
+            notebook_id NUMBER AUTOINCREMENT,
+            file_path VARCHAR(500),
+            file_name VARCHAR(255),
+            folder_name VARCHAR(255),
+            notebook_html TEXT,
+            created_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+            PRIMARY KEY (notebook_id)
+        );
+        """)
+
+
         conn.commit()
     finally:
         cursor.close()
@@ -339,6 +352,56 @@ def insert_notebook_cells_data(conn: snowflake.connector.SnowflakeConnection,
         conn.commit()
     finally:
         cursor.close()
+
+
+
+def insert_consolidated_notebooks_data(conn: snowflake.connector.SnowflakeConnection,
+                                     consolidated_notebooks_df: pd.DataFrame,
+                                     batch_size: int = 1000) -> None:
+    """
+    Insert consolidated notebook data into Snowflake
+    
+    Args:
+        conn: Snowflake connection
+        consolidated_notebooks_df: DataFrame containing consolidated notebook data
+        batch_size: Number of records to insert in each batch
+    """
+    cursor = conn.cursor()
+    
+    try:
+        notebooks_data = []
+        
+        for _, row in consolidated_notebooks_df.iterrows():
+            notebooks_data.append((
+                row['file_path'],
+                row['file_name'],
+                row['folder_name'],
+                row['notebook_html']
+            ))
+            
+            if len(notebooks_data) >= batch_size:
+                cursor.executemany("""
+                INSERT INTO GITHUB_CONSOLIDATED_NOTEBOOKS (
+                    file_path, file_name, folder_name, notebook_html
+                )
+                VALUES (%s, %s, %s, %s)
+                """, notebooks_data)
+                notebooks_data = []
+        
+        if notebooks_data:
+            cursor.executemany("""
+            INSERT INTO GITHUB_CONSOLIDATED_NOTEBOOKS (
+                file_path, file_name, folder_name, notebook_html
+            )
+            VALUES (%s, %s, %s, %s)
+            """, notebooks_data)
+        
+        conn.commit()
+    finally:
+        cursor.close()
+
+
+
 
 def load_github_data_to_snowflake(data: Dict[str, pd.DataFrame]) -> None:
     """

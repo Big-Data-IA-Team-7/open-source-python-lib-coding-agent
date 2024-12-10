@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Dict
 from data_load.process_github_repo.snowflake_loaders.db_connection import snowflake_connection, close_connection
-from data_load.process_github_repo.snowflake_loaders.snowflake_data_loader import create_tables, insert_notebook_cells_data
+from data_load.process_github_repo.snowflake_loaders.snowflake_data_loader import create_tables, insert_notebook_cells_data, insert_consolidated_notebooks_data
 
 
 def load_ipynnb_data_to_snowflake(**kwargs):
@@ -30,6 +30,9 @@ def load_ipynnb_data_to_snowflake(**kwargs):
         if 'notebook_cells' in data and not data['notebook_cells'].empty:
             print("Inserting notebook cell details into Snowflake...")
             insert_notebook_cells_data(conn, data['notebook_cells'])
+        
+        if 'consolidated_notebooks' in data:
+            insert_consolidated_notebooks_data(conn, data['consolidated_notebooks'])
         
         print("Data successfully loaded into Snowflake.")
     except Exception as e:
