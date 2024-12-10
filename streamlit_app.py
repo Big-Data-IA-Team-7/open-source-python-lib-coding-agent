@@ -7,8 +7,14 @@ from auth.Logout import logout
 
 from features.how_to_guide_page import how_to_guide_interface
 from features.error_handling_page import error_handling_interface
+from features.code_generation_page import code_generation_interface
 from features.github_repo_page import github_repo_management
 from features.github_credentials_page import github_credentials
+from logging_module.logging_config import setup_logging
+
+load_dotenv()
+logger = setup_logging()
+
 # Landing page function
 def landing_page():
     st.title("🐍 Python Library Coding Agent")
@@ -73,9 +79,11 @@ elif st.session_state.logged_in and st.session_state.current_page == 'how_to_gui
     how_to_guide_interface()
 elif st.session_state.logged_in and st.session_state.current_page == 'error_handling':
     error_handling_interface()
+elif st.session_state.logged_in and st.session_state.current_page == 'app_builder':
+    code_generation_interface()
 elif st.session_state.logged_in and st.session_state.current_page == 'github':
     github_repo_management()
-elif st.session_state.current_page == 'githubcredentials':
+elif st.session_state.logged_in and st.session_state.current_page == 'githubcredentials':
     github_credentials()
 elif st.session_state.current_page == 'logout':  # Handle logout page
     logout()
@@ -96,9 +104,28 @@ if st.session_state.logged_in:
             st.session_state.current_page = 'error_handling'
             st.rerun()
         
+        if st.button("🛠️ App Builder"):
+            st.session_state.current_page = 'app_builder'
+            st.rerun()
+        
         if st.button("🚀 GitHub Commit"):
             st.session_state.current_page = 'githubcredentials'
             st.rerun()
+        
         if st.button("🚪 Logout"):
             st.session_state.current_page = 'logout'
             st.rerun()
+    
+        if st.session_state.current_page == 'githubcredentials':
+            st.markdown("---")
+            st.subheader("Generate GitHub Personal Access Token (PAT)")
+            st.markdown("""
+            To generate a GitHub Personal Access Token (PAT), follow these steps:
+            1. Visit [GitHub Token Settings](https://github.com/settings/tokens).
+            2. Click on "Generate New Token."
+            3. Select the permissions you need (e.g., "repo" for access to repositories).
+            4. Click "Generate token."
+            5. Copy and save the token (this is the only time you will see it).
+            
+            Use the token in the input field above when prompted for the PAT.
+            """)

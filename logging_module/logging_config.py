@@ -84,7 +84,7 @@ def setup_logging(log_dir="logs"):
     for handler in handlers:
         root_logger.addHandler(handler)
     
-    for lib in ['snowflake', 'botocore', 'boto3', 'langsmith', 'langchain', 'httpcore', 'openai', 'pinecone']:
+    for lib in ['urllib3', 'snowflake', 'botocore', 'boto3', 'langsmith', 'langchain', 'httpcore', 'openai', 'pinecone', 'pinecone_plugin_interface', 'httpx']:
         logging.getLogger(lib).setLevel(logging.CRITICAL)
     
     return root_logger

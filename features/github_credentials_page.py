@@ -1,10 +1,9 @@
 import streamlit as st
 import os 
 import requests
-from dotenv import load_dotenv
 import time 
 import logging
-load_dotenv()
+
 FAST_API_URL = os.getenv("FAST_API_URL")
 
 def github_credentials():
@@ -55,15 +54,3 @@ def github_credentials():
             st.error("User does not exist.")
         else:
             st.error("Unexpected response.")
-   # Sidebar for GitHub Personal Access Token (PAT) generation
-    st.sidebar.subheader("Generate GitHub Personal Access Token (PAT)")
-    st.sidebar.markdown("""
-    To generate a GitHub Personal Access Token (PAT), follow these steps:
-    1. Visit [GitHub Token Settings](https://github.com/settings/tokens).
-    2. Click on "Generate New Token."
-    3. Select the permissions you need (e.g., "repo" for access to repositories).
-    4. Click "Generate token."
-    5. Copy and save the token (this is the only time you will see it).
-    
-    Use the token in the input field above when prompted for the PAT.
-    """)

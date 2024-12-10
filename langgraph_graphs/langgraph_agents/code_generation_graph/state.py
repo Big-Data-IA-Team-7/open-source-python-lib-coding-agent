@@ -21,16 +21,22 @@ class InputState:
 class AgentState(InputState):
     """State of the retrieval graph / agent."""
 
-    steps: list[str] = field(default_factory=list)
+    research_steps: list[str] = field(default_factory=list)
     """A list of steps in the research plan."""
+    app_steps: list[str] = field(default_factory=list)
+    """A list of steps in the app plan."""
     documents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
     """Populated by the retriever. This is a list of documents that the agent can reference."""
-    code: Annotated[list[tuple[str, ...]], reduce_codes] = field(default_factory=list)
+    library_code: Annotated[list[tuple[str, ...]], reduce_codes] = field(default_factory=list)
     """Populated by the retriever. This is a list of code blocks that the agent can reference."""
     answer: str = field(default="")
     """Final answer. Useful for evaluations."""
     query: str = field(default="")
     """To store the user query."""
+    frontend: str = field(default="")
+    """To store the frontend code provided by code generated agent."""
+    backend: str = field(default="")
+    """To store the backend code provided by code generated agent."""
     code_generated: str = field(default="")
     """Populated by the code generation agent. This contains the code generated."""
     requirements: str = field(default="")

@@ -1,4 +1,5 @@
 from typing import Any, TypedDict, cast, Literal
+import logging
 
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import BaseMessage
@@ -9,10 +10,7 @@ from langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph.gra
 from langgraph_graphs.langgraph_agents.code_generation_graph.state import AgentState, InputState
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.configuration import AgentConfiguration
 
-
-
-
-
+logger = logging.getLogger(__name__)
 
 async def conduct_research(state: AgentState) -> dict[str, Any]:
     """Execute the first step of the research plan.
@@ -26,15 +24,13 @@ async def conduct_research(state: AgentState) -> dict[str, Any]:
         dict[str, list[str]]: A dictionary with 'documents' containing the research results and
                               'steps' containing the remaining research steps.
     """
-    result = await researcher_graph.ainvoke({"question": state.steps[0]})
+    result = await researcher_graph.ainvoke({"question": state.research_steps[0]})
 
-    return {"documents": result["documents"], "code": result["library_code"], "steps": state.steps[1:]}
+    logger.debug(f"Result: {result}")
 
+    return {"documents": result["documents"], "library_code": result["library_code"], "research_steps": state.research_steps[1:]}
 
-
-
-
-async def create_research_plan(
+async def create_app_research_plan(
     state: AgentState, *, config: RunnableConfig
 ) -> dict[str, list[str]]:
     """Create a step-by-step research plan for answering a LangChain-related query.
@@ -50,7 +46,8 @@ async def create_research_plan(
     class Plan(TypedDict):
         """Generate research plan."""
 
-        steps: list[str]
+        app_steps: list[str]
+        research_steps: list[str]
 
     configuration = AgentConfiguration.from_runnable_config(config)
     model = load_chat_model(configuration.query_model).with_structured_output(Plan)
@@ -58,58 +55,66 @@ async def create_research_plan(
         {"role": "system", "content": configuration.research_plan_system_prompt}
     ] + state.messages
     response = await cast(Plan, model.ainvoke(messages))
+    logger.debug(f"Response: {response}")
+    logger.debug(f"Research Steps: {response["research_steps"]}")
+    logger.debug(f"App Steps: {response["app_steps"]}")
     return {
-        "steps": response["steps"],
+        "research_steps": response["research_steps"],
+        "app_steps": response["app_steps"],
         "documents": "delete",
         "query": state.messages[-1].content,
     }
 
-
-
-
-
-def check_finished(state: AgentState) -> Literal["generate_code", "conduct_research"]:
+def check_finished(state: AgentState) -> Literal["build_app", "conduct_research"]:
     """Determine if the research process is complete or if more research is needed.
 
     This function checks if there are any remaining steps in the research plan:
         - If there are, route back to the `conduct_research` node
-        - Otherwise, route to the `respond` node
+        - Otherwise, route to the `build_app` node
 
     Args:
         state (AgentState): The current state of the agent, including the remaining research steps.
 
     Returns:
-        Literal["generate_code", "conduct_research"]: The next step to take based on whether research is complete.
+        Literal["build_app", "conduct_research"]: The next step to take based on whether research is complete.
     """
-    if len(state.steps or []) > 0:
+    if len(state.research_steps) > 0:
         return "conduct_research"
     else:
-        return "generate_code"
+        return "build_app"
     
+async def build_app(
+        state: AgentState, *, config: RunnableConfig
+) -> dict[str, Any]:
+    """Execute all the steps of the app plan.
 
-
-async def generate_code(
-    state: AgentState, *, config: RunnableConfig
-) -> dict[str, list[BaseMessage]]:
-    """Generate code for a complete application based on the user's query and conducted research.
-
-    This function generates complete application code for the provided use case using the conversation history and the documents retrieved by the researcher.
+    Follow the steps to build a complete application based on the user's query and conducted research.
 
     Args:
-        state (AgentState): The current state of the agent, including retrieved documents and conversation history.
-        config (RunnableConfig): Configuration with the model used to respond.
+        state (AgentState): The current state of the agent, including the research plan steps.
 
     Returns:
-        dict[str, list[BaseMessage]]: A dictionary with a 'messages' key containing the generated response.
+        dict[str, list[str]]: A dictionary with 'documents' containing the research results and
+                              'steps' containing the remaining research steps.
     """
-    configuration = AgentConfiguration.from_runnable_config(config)
-    model = load_chat_model(configuration.response_model)
+
+    class CodeGenerated(TypedDict):
+        """Generate the frontend and backend code"""
+        
+        frontend: str
+        backend: str
+
+    configuration = AgentConfiguration.from_runnable_config(config)    
+    model = load_chat_model(configuration.query_model).with_structured_output(CodeGenerated)
     top_k = 20
-    context = format_docs_code(docs=state.documents[:top_k], code=state.code)
-    prompt = configuration.code_generation_system_prompt.format(context=context)
-    messages = [{"role": "system", "content": prompt}] + state.messages
-    response = await model.ainvoke(messages)
-    return {"messages": [response], "code_generated": response.content}
+    context = format_docs_code(docs=state.documents[:top_k], code=state.library_code)
+    prompt = configuration.build_app_response_system_prompt.format(steps=state.app_steps, context=context)
+    messages = [
+        {"role": "system", "content": prompt}
+    ] + state.messages
+    response = await cast(CodeGenerated, model.ainvoke(messages))
+
+    return {"frontend": response["frontend"], "backend": response["backend"]}
 
 async def generate_requirements_txt(
     state: AgentState, *, config: RunnableConfig
@@ -205,22 +210,8 @@ async def judge_evaluation(state: AgentState, *, config: RunnableConfig) -> dict
     response = await model.ainvoke(messages)
     return {"messages": [response], "feedback_value": response.content}
 
-
 def decision_loop(state: AgentState) -> Literal["send_response", "generate_code","generate_requirements_txt"]:
     return "send_response"
-
-
-
-'''def decision_loop(state: AgentState) -> Literal["send_response", "generate_code","generate_requirements_txt"]:
-    if state.feedback_value == 0:
-        return "send_response"
-    elif state.feedback_value == 1:
-        return "generate_code"
-    elif state.feedback_value == 2:
-        return "generate_requirements_txt"
-    else:
-        return "generate_readme_md"
-'''
 
 def send_response(state: AgentState) -> dict[str, Any]:
     return {
@@ -230,38 +221,25 @@ def send_response(state: AgentState) -> dict[str, Any]:
     }
 
 builder = StateGraph(AgentState, input=InputState, config_schema=AgentConfiguration)
-builder.add_node(create_research_plan)
+builder.add_node(create_app_research_plan)
 builder.add_node(conduct_research)
-builder.add_node(generate_code)
-builder.add_node(generate_requirements_txt)
-builder.add_node(generate_readme_md)
-builder.add_node(evaluate_code)
-builder.add_node(judge_evaluation)
-builder.add_node(send_response)
+builder.add_node(build_app)
+# builder.add_node(generate_requirements_txt)
+# builder.add_node(generate_readme_md)
+# builder.add_node(evaluate_code)
+# builder.add_node(judge_evaluation)
+# builder.add_node(send_response)
 
-builder.add_edge(START, "create_research_plan")
-builder.add_edge("create_research_plan", "conduct_research")
+builder.add_edge(START, "create_app_research_plan")
+builder.add_edge("create_app_research_plan", "conduct_research")
 builder.add_conditional_edges("conduct_research", check_finished)
-builder.add_edge("generate_code", "generate_requirements_txt")
-builder.add_edge("generate_requirements_txt", "generate_readme_md")
-builder.add_edge("generate_readme_md", "evaluate_code")
-builder.add_edge("evaluate_code", "judge_evaluation")
-builder.add_conditional_edges("judge_evaluation", decision_loop)
-builder.add_edge("send_response", END)
+builder.add_edge("build_app", END)
+# builder.add_edge("generate_requirements_txt", "generate_readme_md")
+# builder.add_edge("generate_readme_md", "evaluate_code")
+# builder.add_edge("evaluate_code", "judge_evaluation")
+# builder.add_conditional_edges("judge_evaluation", decision_loop)
+# builder.add_edge("send_response", END)
 
 graph = builder.compile()
 graph.name = "CodeGenerationGraph"
-
-
-
-async def run_graph():
-    """Run the graph with a user query."""
-    result = await graph.ainvoke({
-        "messages": [{"role": "user", "content": "Build an RAG application using Langgraph to build a chatbot for Boston flight company"}]
-    })
-    print(result['code_generated'])
-
-import asyncio
-
-asyncio.run(run_graph())
 
