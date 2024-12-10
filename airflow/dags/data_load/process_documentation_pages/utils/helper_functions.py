@@ -1,6 +1,6 @@
 import re
 from openai import OpenAI
-from data_load.parameter_config import OPENAI_API, AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_S3_BUCKET_NAME
+from data_load.configuration.parameter_config import OPENAI_API, AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_S3_BUCKET_NAME
 import boto3
 from botocore.exceptions import ClientError
 

@@ -3,7 +3,7 @@ import snowflake.connector
 from dotenv import load_dotenv
 from snowflake.connector.errors import Error as SnowflakeError
 from typing import Optional
-from data_load.parameter_config import SNOWFLAKE_ACCOUNT,SNOWFLAKE_DATABASE,SNOWFLAKE_WAREHOUSE,SNOWFLAKE_USERNAME,SNOWFLAKE_PASSWORD,SNOWFLAKE_SCHEMA,SNOWFLAKE_ROLE
+from data_load.configuration.parameter_config import SNOWFLAKE_ACCOUNT,SNOWFLAKE_DATABASE,SNOWFLAKE_WAREHOUSE,SNOWFLAKE_USERNAME,SNOWFLAKE_PASSWORD,SNOWFLAKE_SCHEMA,SNOWFLAKE_ROLE
 
 # Load environment variables from .env file
 load_dotenv()

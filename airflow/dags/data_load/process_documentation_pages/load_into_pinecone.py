@@ -4,9 +4,8 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
+from data_load.configuration.parameter_config import PINECONE_API, OPENAI_API
 
-# Assuming you have these defined in a separate configuration file
-from data_load.parameter_config import PINECONE_API, OPENAI_API
 
 def dict_to_document(doc_dict):
     """
@@ -20,12 +19,14 @@ def dict_to_document(doc_dict):
         metadata=doc_dict['metadata']
     )
 
-def store_to_pinecone(**kwargs):
+
+def store_to_pinecone(index_name, **kwargs):
     """
     Store processed documents to a Pinecone index, creating the index if it does not exist.
     
-    :param kwargs: Airflow context dictionary
-    :return: Number of documents processed
+    :param index_name: Name of the Pinecone index.
+    :param kwargs: Airflow context dictionary.
+    :return: Number of documents processed.
     """
     # Retrieve processed documents from XCom
     ti = kwargs['ti']
@@ -40,9 +41,6 @@ def store_to_pinecone(**kwargs):
         api_key=OPENAI_API
     )
     pc = Pinecone(api_key=PINECONE_API)
-    
-    # Define index name
-    index_name = 'langgraph-docs'
     
     # Create index if it does not exist
     if index_name not in pc.list_indexes():
@@ -83,4 +81,4 @@ def store_to_pinecone(**kwargs):
     vector_store.add_documents(split_docs)
     
     # Return the number of documents processed for logging
-    #return len(split_docs)
+    return len(split_docs)

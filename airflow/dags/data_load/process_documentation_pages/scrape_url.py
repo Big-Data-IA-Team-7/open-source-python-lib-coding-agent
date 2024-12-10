@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from langchain_community.document_loaders.recursive_url_loader import RecursiveUrlLoader
 
-def extract_with_metadata(html: str) -> str:  # Changed return type back to str
+def extract_with_metadata(html: str) -> str:
     """Extract content and metadata from HTML."""
     soup = BeautifulSoup(html, "html.parser")
     
@@ -24,20 +24,22 @@ def extract_with_metadata(html: str) -> str:  # Changed return type back to str
     # Return the HTML content
     return str(soup)
 
-def load_recursive_url(**kwargs):
+def load_recursive_url(start_url, base_url, **kwargs):
     """
-    Load documents recursively from the LangGraph documentation site.
-    
+    Load documents recursively from a given URL.
+
+    :param start_url: The URL to start crawling from.
+    :param base_url: The base URL to restrict crawling to.
     :param kwargs: Airflow context dictionary
     :return: Number of documents scraped
     """
     # Create the loader with metadata extraction
     loader = RecursiveUrlLoader(
-        "https://langchain-ai.github.io/langgraph/",
-        max_depth=5,
+        start_url,
+        max_depth=2,
         prevent_outside=True,
         extractor=extract_with_metadata,
-        base_url="https://langchain-ai.github.io/"
+        base_url=base_url
     )
     
     # Load the documents

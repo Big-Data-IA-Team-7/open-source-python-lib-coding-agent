@@ -2,24 +2,23 @@ import os
 import hashlib
 from bs4 import BeautifulSoup
 from langchain_core.documents import Document
-from data_load.utils.helper_functions import clean_and_normalize_code, determine_file_extension, get_code_definitions, upload_file_to_s3
-from data_load.parameter_config import AWS_S3_BUCKET_NAME
+from data_load.process_documentation_pages.utils.helper_functions import clean_and_normalize_code, determine_file_extension, get_code_definitions, upload_file_to_s3
+from data_load.configuration.parameter_config import AWS_S3_BUCKET_NAME
 
-
-def process_content(**kwargs):
+def process_content(file_dir, **kwargs):
     """
     Processes loaded URLs and stores extracted code and metadata.
     
-    :param kwargs: Airflow context dictionary
-    :return: Number of processed documents
+    :param file_dir: Directory name for storing code extracts.
+    :param kwargs: Airflow context dictionary.
+    :return: Number of processed documents.
     """
     # Retrieve documents from XCom
     ti = kwargs['ti']
     documents = ti.xcom_pull(key='scraped_documents', task_ids='load_recursive_url_task')
     
-    # Get S3 bucket name and local output directory from kwargs
-    output_dir = kwargs.get('output_dir', 'langgraph_code_extracts')
-    os.makedirs(output_dir, exist_ok=True)
+    # Create the output directory
+    os.makedirs(file_dir, exist_ok=True)
     
     full_docs = []
     
@@ -36,14 +35,14 @@ def process_content(**kwargs):
                 # Generate unique filename based on code content
                 filename_base = hashlib.md5(code_content.encode()).hexdigest()
                 ext = determine_file_extension(code_content)
-                local_filename = os.path.join(output_dir, f"{filename_base}{ext}")
+                local_filename = os.path.join(file_dir, f"{filename_base}{ext}")
                 
                 # Write code to local file
                 with open(local_filename, 'w', encoding='utf-8') as f:
                     f.write(code_content)
                 
                 # Upload to S3
-                s3_key = f"code_extracts/langgraph-docs/{filename_base}{ext}"
+                s3_key = f"code_extracts/{file_dir}/{filename_base}{ext}"
                 upload_success = upload_file_to_s3(
                     file_path=local_filename, 
                     s3_key=s3_key

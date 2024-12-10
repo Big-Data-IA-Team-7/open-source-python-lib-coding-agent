@@ -1,9 +1,10 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.models import Variable
 from datetime import datetime, timedelta
-from airflow.dags.data_load.process_documentation_pages.scrape_url import load_recursive_url
-from airflow.dags.data_load.process_documentation_pages.process_docs import process_content
-from airflow.dags.data_load.process_documentation_pages.load_into_pinecone import store_to_pinecone
+from data_load.process_documentation_pages.scrape_url import load_recursive_url
+from data_load.process_documentation_pages.process_docs import process_content
+from data_load.process_documentation_pages.load_into_pinecone import store_to_pinecone
 
 # Define default arguments for the DAG
 default_args = {
@@ -28,13 +29,21 @@ with DAG(
     load_task = PythonOperator(
         task_id='load_recursive_url_task',
         python_callable=load_recursive_url,
-        provide_context=True,  # Important for XCom
+        op_kwargs={
+            'start_url': 'https://docs.llamaindex.ai/en/stable/#introduction',
+            'base_url': 'https://docs.llamaindex.ai/en/stable/',
+        },
+        provide_context=True,
     )
+
 
     # Task 2: Process and Store Code
     process_task = PythonOperator(
         task_id='process_and_store_task',
         python_callable=process_content,
+        op_kwargs={
+            'file_dir': 'llamaindex'
+        },
         provide_context=True,  # Important for XCom
     )
 
@@ -42,7 +51,10 @@ with DAG(
     store_task = PythonOperator(
         task_id='store_to_pinecone_task',
         python_callable=store_to_pinecone,
-        provide_context=True,  # Important for XCo
+        op_kwargs={
+            'index_name': 'llamaindex'  # Pass the index name dynamically here
+        },
+        provide_context=True,  # Important for XCom
     )
 
     # Define task dependencies
