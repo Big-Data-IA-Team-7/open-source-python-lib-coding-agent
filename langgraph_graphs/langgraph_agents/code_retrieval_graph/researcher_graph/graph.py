@@ -4,8 +4,11 @@ This module defines the core structure and functionality of the researcher graph
 which is responsible for generating search queries and retrieving relevant documents.
 """
 
+import logging
 from typing import cast
 from typing_extensions import TypedDict
+
+from pinecone.core.openapi.shared.exceptions import ServiceException
 
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig
@@ -19,6 +22,7 @@ from langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph.sta
 from langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph import configuration
 from langgraph_graphs.langgraph_agents.utils import load_chat_model, replace_s3_locations_with_content, remove_code_file_placeholders, format_docs
 
+logger = logging.getLogger(__name__)
 
 async def generate_queries(
     state: ResearcherState, *, config: RunnableConfig
@@ -61,11 +65,17 @@ async def retrieve_documents(
     Returns:
         dict[str, list[Document]]: A dictionary with a 'documents' key containing the list of retrieved documents.
     """
-    with retrieval.make_retriever(config) as retriever:
-        documents = await retriever.ainvoke(state.query, config)
-        updated_docs = replace_s3_locations_with_content(documents)
-        response = remove_code_file_placeholders(updated_docs)
-        return {"documents": response}
+    try:
+        with retrieval.make_retriever(config) as retriever:
+            documents = await retriever.ainvoke(state.query, config)
+            updated_docs = replace_s3_locations_with_content(documents)
+            response = remove_code_file_placeholders(updated_docs)
+
+            logging.debug(f"Retriever Graph: {response}")
+            return {"documents": response}
+    except ServiceException as e:
+        logging.error(f"Pinecone service error: {str(e)}")
+        raise  # Re-raise the error to be handled by the calling function
 
 async def list_classes_and_apis(
     state: ResearcherState, *, config: RunnableConfig

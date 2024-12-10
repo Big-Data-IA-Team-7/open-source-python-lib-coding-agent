@@ -52,8 +52,8 @@ def process_stream(line: str):
                     logger.debug(f"Document Data: {current_chunk}")
                     try:
                         # Find all Document instances using regex
-                        document_matches = re.finditer(r"Document\([^)]+\)", current_chunk)
-                        
+                        document_matches = re.finditer(r"Document\(id='[^']+',\s*metadata={'description':\s*'([^']+)',\s*'source':\s*'([^']+)',\s*'title':\s*'([^']+)'[^)]+\)", current_chunk)
+
                         formatted_output = st.container()
                         with formatted_output:
                             # Extract and display current step if present
@@ -66,8 +66,14 @@ def process_stream(line: str):
                             # Display document metadata
                             st.markdown("#### Relevant Documents")
                             for i, match in enumerate(list(document_matches)[:3], 1):
-                                doc_str = match.group(0)
-                                metadata = extract_metadata_from_document_string(doc_str)
+                                # Extract metadata directly from regex groups
+                                description = match.group(1)
+                                source = match.group(2)
+                                title = match.group(3)
+                                
+                                logging.debug(f"Title: {title}")
+                                logging.debug(f"Description: {description}")
+                                logging.debug(f"Source: {source}")
                                 
                                 st.markdown(
                                     f"""
@@ -77,14 +83,14 @@ def process_stream(line: str):
                                         background-color: #f0f2f6;
                                         margin: 10px 0;
                                     ">
-                                        <b>{i}. {metadata.get('title', 'No Title')}</b><br>
-                                        <i>{metadata.get('description', 'No description available')}</i><br>
-                                        <a href="{metadata.get('source', '#')}" target="_blank">Source Link</a>
+                                        <b>{i}. {title or 'No Title'}</b><br>
+                                        <i>{description or 'No description available'}</i><br>
+                                        <a href="{source or '#'}" target="_blank">Source Link</a>
                                     </div>
                                     """, 
                                     unsafe_allow_html=True
                                 )
-                        
+
                         return None
                         
                     except Exception as e:
@@ -93,16 +99,16 @@ def process_stream(line: str):
                     
                     return
                 
-                elif "'create_research_plan'" in current_chunk:
+                elif "'create_research_plan'" in current_chunk or "'create_app_research_plan" in current_chunk:
                     # Only evaluate for research plan data
                     try:
                         data = eval(current_chunk)
-                        plan = data.get('create_research_plan', {})
-                        steps = plan.get('steps', [])
+                        plan = data.get('create_research_plan', {}) or data.get('create_app_research_plan', {})
+                        steps = plan.get('steps', []) or plan.get('app_steps', [])
 
                         formatted_output = st.container()
                         with formatted_output:
-                            st.markdown("### Research Steps")
+                            st.markdown("### Application Steps")
                             
                             for i, step in enumerate(steps, 1):
                                 st.markdown(
@@ -124,6 +130,72 @@ def process_stream(line: str):
                     except Exception as e:
                         logger.error(f"Error processing research plan: {e}")
                         st.error(f"Error processing research plan: {e}")
+                
+                elif "'build_app'" in current_chunk:
+                    logger.debug(f"App Code: {current_chunk}")
+                    try:    
+                        data = eval(current_chunk)
+                        app_data = data.get('build_app', {})
+                        
+                        # Create formatted output container
+                        formatted_output = st.container()
+                        with formatted_output:
+                            st.markdown("### Application Code")
+                            
+                            # Display frontend.py code
+                            st.markdown("""
+                                <div style="
+                                    padding: 10px;
+                                    border-radius: 5px;
+                                    background-color: #f0f2f6;
+                                    margin: 10px 0;
+                                ">
+                                    <b>frontend.py</b>
+                                </div>
+                            """, unsafe_allow_html=True)
+                            
+                            st.code(app_data.get('frontend', ''), language='python')
+                            
+                            # Display backend.py code
+                            st.markdown("""
+                                <div style="
+                                    padding: 10px;
+                                    border-radius: 5px;
+                                    background-color: #f0f2f6;
+                                    margin: 10px 0;
+                                ">
+                                    <b>backend.py</b>
+                                </div>
+                            """, unsafe_allow_html=True)
+                            
+                            st.code(app_data.get('backend', ''), language='python')
+                            
+                            # Add download buttons for both files
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                frontend_code = app_data.get('frontend', '')
+                                st.download_button(
+                                    label="Download frontend.py",
+                                    data=frontend_code,
+                                    file_name="frontend.py",
+                                    mime="text/plain"
+                                )
+                            
+                            with col2:
+                                backend_code = app_data.get('backend', '')
+                                st.download_button(
+                                    label="Download backend.py",
+                                    data=backend_code,
+                                    file_name="backend.py",
+                                    mime="text/plain"
+                                )
+                        
+                        return None
+                        
+                    except Exception as e:
+                        logger.error(f"Error processing build_app: {e}")
+                        st.error(f"Error processing build_app: {e}")
                     
                 elif "'respond'" in current_chunk:
                     # Handle AIMessage format using string parsing for both quote types
@@ -148,6 +220,7 @@ def process_stream(line: str):
                         processed_content = preprocess_content(message_content)
                         st.markdown(processed_content)
                         return processed_content
+                    
                 elif "'handle_error'" in current_chunk:
                         try:
                             data = eval(current_chunk)
