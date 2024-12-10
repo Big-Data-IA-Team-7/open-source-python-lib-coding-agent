@@ -47,3 +47,6 @@ README_MD_GENERATION_SYSTEM_PROMPT = (
 JUDGE_EVALUATION_SYSTEM_PROMPT = (
     hub.pull("judge-evaluation-system-prompt").messages[0].prompt.template
 )
+REGENERATE_CODE_SYSTEM_PROMPT = (
+    hub.pull("regenerate-code-system-prompt").messages[0].prompt.template
+)
