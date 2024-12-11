@@ -37,13 +37,11 @@ class AgentState(InputState):
     """To store the frontend code provided by code generated agent."""
     backend: str = field(default="")
     """To store the backend code provided by code generated agent."""
-    code_generated: str = field(default="")
-    """Populated by the code generation agent. This contains the code generated."""
+    feedback_content: str = field(default="")
+    """Feedback provided. This is the feedback provided by the LLM for the generated code."""
+    code_evaluated: bool = field(default=False)
+    """Boolean flag indicating whether the code has been evaluated."""
     requirements: str = field(default="")
     """Populated by the requirements .txt generation agent. This contains the requirements txt required."""
     readme_content: str = field(default="")
     """Populated by the readme generation agent. This contains the readme content to push to GitHub."""
-    feedback_content: str = field(default="")
-    """Feedback provided. This is the feedback provided by the LLM for the generated code."""
-    feedback_value: int = field(default=0)  # Changed to a default integer value
-    """Threshold for the loop. This is the threshold calculated by the LLM."""
