@@ -1,16 +1,12 @@
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
 from git import Repo
 import os
-import shutil
 from fast_api.schema.request_schema import GitHubCredentials, RepoDetails, GitHubCredentialsRequest
 from fast_api.services.github_service import validate_github_credentials, commit_and_push
 from fast_api.config.db_connection import snowflake_connection
-from fast_api.services.auth_service import token_hashing
 import logging
+
 logger = logging.getLogger(__name__)
-
-
 router = APIRouter()
 
 @router.get("/check-github-credentials/{username}")
