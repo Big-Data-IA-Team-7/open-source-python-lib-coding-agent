@@ -75,6 +75,7 @@ elif st.session_state.logged_in and st.session_state.current_page == 'error_hand
     error_handling_interface()
 elif st.session_state.logged_in and st.session_state.current_page == 'github':
     github_repo_management()
+
 elif st.session_state.current_page == 'githubcredentials':
     github_credentials()
 elif st.session_state.current_page == 'logout':  # Handle logout page
@@ -113,7 +114,6 @@ if st.session_state.logged_in:
             Navigate through the sidebar to get started!
             """)
 
-            # Disable App Builder for Llama Index
     with st.sidebar:
         st.title(f"Welcome, {st.session_state.get('user_name', 'User')}")
         library = st.selectbox(
@@ -121,8 +121,8 @@ if st.session_state.logged_in:
             ["", "LangGraph", "LangChain", "Llama Index"],
             help="Choose a library to explore its features and functionality."
                 )
-        if library:
-            st.session_state.library = library
+        st.session_state.library = library
+
         if library=='Llama Index':
             st.error("Llama Index is doesn't support App Builder.")
         if st.button("📖 How-to Guide"):
