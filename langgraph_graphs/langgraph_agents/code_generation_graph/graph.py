@@ -104,11 +104,11 @@ async def build_app(
         frontend: str
         backend: str
 
-    configuration = AgentConfiguration.from_runnable_config(config)
-    model = load_chat_model(configuration.query_model).with_structured_output(CodeGenerated)
-    top_k = 20
-    context = format_docs_code(docs=state.documents[:top_k], code=state.library_code)
     if state.code_evaluated:
+        configuration = AgentConfiguration.from_runnable_config(config)
+        model = load_chat_model(configuration.query_model).with_structured_output(CodeGenerated)
+        top_k = 20
+        context = format_docs_code(docs=state.documents[:top_k], code=state.library_code)
         prompt = configuration.regenerate_code_system_prompt.format(
             frontend=state.frontend,
             backend=state.backend,
@@ -116,11 +116,24 @@ async def build_app(
             context=context
             )
     else:
+        config = RunnableConfig(
+            configurable={
+                "response_model": "anthropic/claude-3-5-sonnet-20241022"
+            }
+        )
+        configuration = AgentConfiguration.from_runnable_config(config)
+        max_tokens_value = 4096
+        model = load_chat_model(configuration.response_model, max_tokens=max_tokens_value).with_structured_output(CodeGenerated)
+        top_k = 20
+        context = format_docs_code(docs=state.documents[:top_k], code=state.library_code)
         prompt = configuration.build_app_response_system_prompt.format(steps=state.app_steps, context=context)
+
     messages = [
         {"role": "system", "content": prompt}
     ] + state.messages
     response = await cast(CodeGenerated, model.ainvoke(messages))
+
+    logger.debug(f"Anthropic Response: {response}")
 
     return {"frontend": response["frontend"], "backend": response["backend"]}
 
@@ -167,7 +180,7 @@ async def generate_requirements_txt(
     """
     configuration = AgentConfiguration.from_runnable_config(config)
     model = load_chat_model(configuration.response_model)
-    prompt = configuration.requirements_txt_generation_system_prompt.format(code=state.code_generated)
+    prompt = configuration.requirements_txt_generation_system_prompt.format(frontend=state.frontend, backend=state.backend)
     messages = [{"role": "system", "content": prompt}] + state.messages
     response = await model.ainvoke(messages)
     return {"messages": [response], "requirements": response.content}
@@ -189,14 +202,15 @@ async def generate_readme_md(
     configuration = AgentConfiguration.from_runnable_config(config)
     model = load_chat_model(configuration.response_model)
     prompt = configuration.readme_md_txt_generation_system_prompt.format(
-        code=state.code_generated,
+        frontend=state.frontend,
+        backend=state.backend,
         requirements_txt=state.requirements
     )
     messages = [{"role": "system", "content": prompt}] + state.messages
     response = await model.ainvoke(messages)
     return {"messages": [response], "readme_content": response.content}
 
-def decision_loop(state: AgentState) -> Literal["send_response", "generate_code","generate_requirements_txt"]:
+def decision_loop(state: AgentState) -> Literal["evaluate_code", "generate_requirements_txt"]:
     """Determine if the code has been reviewed atleast once.
 
     This function checks if the generated code has been are reviewed atleast once:
@@ -207,28 +221,29 @@ def decision_loop(state: AgentState) -> Literal["send_response", "generate_code"
         state (AgentState): The current state of the agent, including the remaining research steps.
 
     Returns:
-        Literal["build_app", "conduct_research"]: The next step to take based on whether research is complete.
+        Union[Literal["evaluate_code"], type(END)]: Returns "evaluate_code" if code hasn't been evaluated, 
+        or END to terminate the graph.
     """
     if not state.code_evaluated:
         return "evaluate_code"
     else:
-        return END
+        return "generate_requirements_txt"
 
 builder = StateGraph(AgentState, input=InputState, config_schema=AgentConfiguration)
 builder.add_node(create_app_research_plan)
 builder.add_node(conduct_research)
 builder.add_node(build_app)
 builder.add_node(evaluate_code)
-# builder.add_node(generate_requirements_txt)
-# builder.add_node(generate_readme_md)
+builder.add_node(generate_requirements_txt)
+builder.add_node(generate_readme_md)
 
 builder.add_edge(START, "create_app_research_plan")
 builder.add_edge("create_app_research_plan", "conduct_research")
 builder.add_conditional_edges("conduct_research", check_finished)
 builder.add_conditional_edges("build_app", decision_loop)
 builder.add_edge("evaluate_code", "build_app")
-# builder.add_edge("generate_requirements_txt", "generate_readme_md")
-# builder.add_edge("generate_readme_md", END)
+builder.add_edge("generate_requirements_txt", "generate_readme_md")
+builder.add_edge("generate_readme_md", END)
 
 graph = builder.compile()
 graph.name = "CodeGenerationGraph"

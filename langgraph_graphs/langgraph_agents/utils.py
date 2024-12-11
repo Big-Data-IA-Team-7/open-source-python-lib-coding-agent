@@ -81,7 +81,7 @@ def replace_s3_locations_with_content(docs: List[Document]) -> List[Document]:
     
     return docs
 
-def load_chat_model(fully_specified_name: str) -> BaseChatModel:
+def load_chat_model(fully_specified_name: str, max_tokens: int = 4096) -> BaseChatModel:
     """Load a chat model from a fully specified name.
 
     Args:
@@ -93,7 +93,10 @@ def load_chat_model(fully_specified_name: str) -> BaseChatModel:
         provider = ""
         model = fully_specified_name
 
-    model_kwargs = {"temperature": 0}
+    model_kwargs = {
+        "temperature": 0,
+        "max_tokens": max_tokens
+    }
     return init_chat_model(model, model_provider=provider, **model_kwargs)
 
 def reduce_docs(

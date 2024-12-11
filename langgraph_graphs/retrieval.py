@@ -36,9 +36,11 @@ def make_pinecone_retriever(
 
     pinecone_api_key = os.environ.get("PINECONE_API_KEY", "not_provided")
 
-    vectorstore = PineconeVectorStore(index_name=PINECONE_DOCS_INDEX_NAME,
-                                                pinecone_api_key=pinecone_api_key,
-                                                embedding=embedding_model)
+    vectorstore = PineconeVectorStore(
+        index_name=PINECONE_DOCS_INDEX_NAME,
+        pinecone_api_key=pinecone_api_key,
+        embedding=embedding_model
+    )
 
     search_kwargs = {**configuration.search_kwargs}
     yield vectorstore.as_retriever(search_kwargs=search_kwargs)

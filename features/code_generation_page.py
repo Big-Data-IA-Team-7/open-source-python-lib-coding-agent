@@ -13,6 +13,8 @@ def code_generation_interface():
             st.session_state['code_response'] = None
         if 'last_error_cg' not in st.session_state:
             st.session_state['last_error_cg'] = None
+        if 'final_output' not in st.session_state:
+            st.session_state['final_output'] = False
         if 'token' not in st.session_state:
             st.error("Please log in first")
             return

@@ -133,69 +133,72 @@ def process_stream(line: str):
                 
                 elif "'build_app'" in current_chunk:
                     logger.debug(f"App Code: {current_chunk}")
-                    try:    
-                        data = eval(current_chunk)
-                        app_data = data.get('build_app', {})
+                    if st.session_state.final_output:
+                        st.session_state.final_output = False
+                        try:
+                            data = eval(current_chunk)
+                            app_data = data.get('build_app', {})
+                            
+                            # Create formatted output container
+                            formatted_output = st.container()
+                            with formatted_output:
+                                st.markdown("### Application Code")
+                                
+                                # Display frontend.py code
+                                st.markdown("""
+                                    <div style="
+                                        padding: 10px;
+                                        border-radius: 5px;
+                                        background-color: #f0f2f6;
+                                        margin: 10px 0;
+                                    ">
+                                        <b>frontend.py</b>
+                                    </div>
+                                """, unsafe_allow_html=True)
+                                
+                                st.code(app_data.get('frontend', ''), language='python')
+                                
+                                # Display backend.py code
+                                st.markdown("""
+                                    <div style="
+                                        padding: 10px;
+                                        border-radius: 5px;
+                                        background-color: #f0f2f6;
+                                        margin: 10px 0;
+                                    ">
+                                        <b>backend.py</b>
+                                    </div>
+                                """, unsafe_allow_html=True)
+                                
+                                st.code(app_data.get('backend', ''), language='python')
+                                
+                                # Add download buttons for both files
+                                col1, col2 = st.columns(2)
+                                
+                                with col1:
+                                    frontend_code = app_data.get('frontend', '')
+                                    st.download_button(
+                                        label="Download frontend.py",
+                                        data=frontend_code,
+                                        file_name="frontend.py",
+                                        mime="text/plain"
+                                    )
+                                
+                                with col2:
+                                    backend_code = app_data.get('backend', '')
+                                    st.download_button(
+                                        label="Download backend.py",
+                                        data=backend_code,
+                                        file_name="backend.py",
+                                        mime="text/plain"
+                                    )
+                        except Exception as e:
+                            logger.error(f"Error processing build_app: {e}")
+                            st.error(f"Error processing build_app: {e}")
+                    else:
+                        st.session_state.final_output = True
                         
-                        # Create formatted output container
-                        formatted_output = st.container()
-                        with formatted_output:
-                            st.markdown("### Application Code")
-                            
-                            # Display frontend.py code
-                            st.markdown("""
-                                <div style="
-                                    padding: 10px;
-                                    border-radius: 5px;
-                                    background-color: #f0f2f6;
-                                    margin: 10px 0;
-                                ">
-                                    <b>frontend.py</b>
-                                </div>
-                            """, unsafe_allow_html=True)
-                            
-                            st.code(app_data.get('frontend', ''), language='python')
-                            
-                            # Display backend.py code
-                            st.markdown("""
-                                <div style="
-                                    padding: 10px;
-                                    border-radius: 5px;
-                                    background-color: #f0f2f6;
-                                    margin: 10px 0;
-                                ">
-                                    <b>backend.py</b>
-                                </div>
-                            """, unsafe_allow_html=True)
-                            
-                            st.code(app_data.get('backend', ''), language='python')
-                            
-                            # Add download buttons for both files
-                            col1, col2 = st.columns(2)
-                            
-                            with col1:
-                                frontend_code = app_data.get('frontend', '')
-                                st.download_button(
-                                    label="Download frontend.py",
-                                    data=frontend_code,
-                                    file_name="frontend.py",
-                                    mime="text/plain"
-                                )
-                            
-                            with col2:
-                                backend_code = app_data.get('backend', '')
-                                st.download_button(
-                                    label="Download backend.py",
-                                    data=backend_code,
-                                    file_name="backend.py",
-                                    mime="text/plain"
-                                )
-                        
-                        return None
-                        
-                    except Exception as e:
-                        logger.error(f"Error processing build_app: {e}")
-                        st.error(f"Error processing build_app: {e}")
+                    return None
                     
                 elif "'respond'" in current_chunk:
                     # Handle AIMessage format using string parsing for both quote types
@@ -232,6 +235,77 @@ def process_stream(line: str):
                         except Exception as e:
                             logger.error(f"Error processing handle_error: {e}")
                             st.error(f"Error processing handle_error: {e}")
+                
+                elif "'generate_requirements_txt'" in current_chunk:
+                    logger.debug(f"Requirements Data: {current_chunk}")
+                    try:
+                        # Use the same parsing logic as respond
+                        start_markers = ["content='", 'content="']
+                        end_markers = ["', additional_kwargs", '", additional_kwargs']
+                        
+                        requirements_content = None
+                        
+                        for start_marker, end_marker in zip(start_markers, end_markers):
+                            start_idx = current_chunk.find(start_marker)
+                            if start_idx != -1:
+                                start_idx += len(start_marker)
+                                end_idx = current_chunk.find(end_marker, start_idx)
+                                if end_idx != -1:
+                                    requirements_content = current_chunk[start_idx:end_idx]
+                                    break
+                        
+                        if requirements_content is not None:
+                            requirements = preprocess_content(requirements_content)
+                            formatted_output = st.container()
+                            with formatted_output:
+                                with st.expander("📦 View requirements.txt"):
+                                    st.code(requirements, language='text')
+                                    st.download_button(
+                                        label="Download requirements.txt",
+                                        data=requirements,
+                                        file_name="requirements.txt",
+                                        mime="text/plain"
+                                    )
+                        return None
+                    except Exception as e:
+                        logger.error(f"Error processing requirements.txt: {e}")
+                        st.error(f"Error processing requirements.txt: {e}")
+                
+                # Handle README.md generation
+                elif "'generate_readme_md'" in current_chunk:
+                    logger.debug(f"README Data: {current_chunk}")
+                    try:
+                        # Use the same parsing logic as respond
+                        start_markers = ["content='", 'content="']
+                        end_markers = ["', additional_kwargs", '", additional_kwargs']
+                        
+                        readme_content = None
+                        
+                        for start_marker, end_marker in zip(start_markers, end_markers):
+                            start_idx = current_chunk.find(start_marker)
+                            if start_idx != -1:
+                                start_idx += len(start_marker)
+                                end_idx = current_chunk.find(end_marker, start_idx)
+                                if end_idx != -1:
+                                    readme_content = current_chunk[start_idx:end_idx]
+                                    break
+                        
+                        if readme_content is not None:
+                            readme = preprocess_content(readme_content)
+                            formatted_output = st.container()
+                            with formatted_output:
+                                with st.expander("📖 View README.md"):
+                                    st.markdown(readme)
+                                    st.download_button(
+                                        label="Download README.md",
+                                        data=readme,
+                                        file_name="README.md",
+                                        mime="text/plain"
+                                    )
+                        return None
+                    except Exception as e:
+                        logger.error(f"Error processing README.md: {e}")
+                        st.error(f"Error processing README.md: {e}")
                                     
             except Exception as e:
                 logger.error(f"Exception occurred in main processing: {e}")
