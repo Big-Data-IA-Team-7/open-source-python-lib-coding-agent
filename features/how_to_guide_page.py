@@ -19,7 +19,7 @@ def how_to_guide_interface():
             st.error("Please log in first")
             return
 
-        st.title("How-to Guide")
+        st.title("📖 How-to Guide")
         
         st.markdown("""
         Get step-by-step guides to build LangGraph applications for your use case. 

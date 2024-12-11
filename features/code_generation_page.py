@@ -7,10 +7,10 @@ def code_generation_interface():
     logger = logging.getLogger(__name__)
     try:
         # Error handling for session state initialization
-        if 'history_cg' not in st.session_state:
-            st.session_state['history_cg'] = []
-        if 'code_response' not in st.session_state:
-            st.session_state['code_response'] = None
+        if 'build_stage' not in st.session_state:
+            st.session_state['build_stage'] = None
+        if 'stage_content' not in st.session_state:
+            st.session_state['stage_content'] = {}
         if 'last_error_cg' not in st.session_state:
             st.session_state['last_error_cg'] = None
         if 'final_output' not in st.session_state:
@@ -19,96 +19,91 @@ def code_generation_interface():
             st.error("Please log in first")
             return
 
-        st.title("App Builder")
+        st.title("🛠️ App Builder")
         
         st.markdown("""
-        Build a complete LangGraph application using Streamlit for your usecase. Try an example or enter your own query below:
+        Build a complete LangGraph application using Streamlit for your usecase. Try an example or enter your own requirements below:
         """)
 
+        # Example cards in columns
         col1, col2 = st.columns(2)
         example1 = "Create a LangGraph application for a Code Generation Assistant that can understand programming requirements, generate code with proper documentation, handle edge cases, and provide explanations for the implementation."
         example2 = "Build a LangGraph application for a PDF-based RAG agent that can process PDF documents, extract relevant information, create embeddings, handle semantic search, and provide contextual responses with source citations."
 
         with col1:
-            st.markdown(":computer: **Code Generation Assistant**", 
-                    help=example1)
+            if st.button("📟 Code Generation Assistant", help=example1, use_container_width=True):
+                st.session_state['user_input'] = example1
                 
         with col2:
-            st.markdown(":page_facing_up: **PDF-based RAG Agent**",
-                    help=example2)
+            if st.button("📄 PDF-based RAG Agent", help=example2, use_container_width=True):
+                st.session_state['user_input'] = example2
 
-        # Display chat history
-        try:
-            for message in st.session_state['history_cg']:
-                with st.chat_message(message["role"]):
-                    st.markdown(message["content"])
-        except Exception as history_error:
-            logger.warning("Error displaying chat history. The history may be reset.")
-            st.warning("Error displaying chat history. The history may be reset.")
-            st.session_state['history_cg'] = []
+        # Main input
+        user_input = st.text_area("Enter your application requirements:", 
+                                 value=st.session_state.get('user_input', ''),
+                                 height=100)
 
-        # Chat input
-        user_input = st.chat_input("Enter your query:")
-
-        if 'example_query' in st.session_state:
-            del st.session_state['example_query']
-
-        # Handle user input
-        if user_input:
+        # Build button
+        if st.button("🚀 Build Application", type="primary", use_container_width=True):
+            if not user_input:
+                st.error("Please enter your requirements first!")
+                return
+                
+            # Reset states for new build
+            st.session_state['build_stage'] = 'starting'
+            st.session_state['stage_content'] = {}
+            
             try:
-                # Display user message
-                with st.chat_message("user"):
-                    st.markdown(user_input)
-                st.session_state['history_cg'].append({"role": "user", "content": user_input})
-
-                # Call API and display streaming response
-                with st.chat_message("assistant"):
-                    message_placeholder = st.empty()
-                    try:
-                        # Get the response
-                        # Use asyncio.run for the top-level async call
-                        full_response = stream_application_build(user_input, st.session_state['history_cg'])
-                        
-                        # # Update session state if response is received
-                        if full_response:
-                            st.session_state['code_response'] = full_response
-                            st.session_state['history_cg'].append({
-                                "role": "assistant", 
-                                "content": full_response
-                            })
-                        else:
-                            # Handle empty response
-                            error_message = "Sorry, I couldn't generate a response. Please try again."
-                            message_placeholder.markdown(error_message)
-                            st.session_state['code_response'] = error_message
-                            st.session_state['history_cg'].append({
-                                "role": "assistant", 
-                                "content": error_message
-                            })
-                        
-                    except Exception as stream_error:
-                        if "Stream cancelled by user" in str(stream_error):
-                            logger.warning("Response generation was cancelled.")
-                            message_placeholder.warning("Response generation was cancelled.")
-                        else:
-                            logger.error(f"Error processing response: {str(stream_error)}")
-                            message_placeholder.error(f"Error processing response: {str(stream_error)}")
-                        return
-
-            except Exception as response_error:
-                logger.error("An error occurred while processing your message.")
-                st.error("An error occurred while processing your message.")
+                # Define stage messages
+                stage_messages = {
+                    'create_app_research_plan': '🔍 Researching and gathering relevant implementation details...',
+                    'conduct_research': '👨‍💻 Building application components...',
+                    'build_app': '⚡ Evaluating code quality and performance...',
+                    'evaluate_code': '📦 Generating project dependencies...',
+                    'generate_requirements_txt': '📝 Creating project documentation...'
+                }
+                
+                # Create a single persistent container for progress messages
+                progress_container = st.empty()
+                
+                # Show initial status
+                progress_container.info("🤔 Planning application architecture and steps...")
+                
+                # Define the progress update function
+                def update_progress(chunk_type):
+                    """Update progress message based on chunk type"""
+                    if chunk_type in stage_messages:
+                        progress_container.info(stage_messages[chunk_type])
+                
+                # Store the update function in session state
+                st.session_state['update_progress'] = update_progress
+                
+                # Get the streaming response
+                full_response = stream_application_build(user_input, [])
+                
+                # Clear progress message after completion
+                progress_container.empty()
+                
+                if full_response:
+                    st.success("✅ Application built successfully!")
+                    
+                    # Display final content directly in the UI
+                    for stage, content in st.session_state['stage_content'].items():
+                        if content:  # Only show non-empty stages
+                            st.subheader(f"{stage_messages.get(stage, stage)} - Complete ✓")
+                            st.markdown(content)
+                            st.divider()  # Add visual separation between stages
+                else:
+                    st.error("❌ Failed to build application")
+                    
+            except Exception as build_error:
+                logger.error(f"Build error: {str(build_error)}")
+                st.error(f"An error occurred during the build process: {str(build_error)}")
                 st.session_state['last_error_cg'] = {
-                    'type': type(response_error).__name__,
-                    'message': str(response_error),
+                    'type': type(build_error).__name__,
+                    'message': str(build_error),
                     'traceback': traceback.format_exc()
                 }
-
-        # Clear chat button
-        if st.button("Clear Chat"):
-            st.session_state['history_cg'] = []
-            st.session_state['code_response'] = None
-            st.rerun()
 
         # Error Logging and Display
         if st.session_state.get('last_error_cg'):

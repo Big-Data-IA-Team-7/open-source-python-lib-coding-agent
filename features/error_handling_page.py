@@ -22,7 +22,7 @@ def error_handling_interface():
             st.error("Please log in first")
             return
 
-        st.title("Error Handler")
+        st.title("🚨 Error Handler")
         
         st.markdown("""
         Get help debugging your code by providing context, code, and the error message.
