@@ -2,8 +2,72 @@ import streamlit as st
 import logging
 import re
 from typing import Optional
+import threading
+from pathlib import Path
+from utils.app_launcher import execute_application
 
 logger = logging.getLogger(__name__)
+
+def save_file_to_disk(content: str, filename: str) -> bool:
+    """Save content to a file on disk."""
+    try:
+        with open(filename, 'w') as f:
+            f.write(content)
+        return True
+    except Exception as e:
+        logger.error(f"Error saving {filename}: {e}")
+        return False
+
+def run_app_in_thread():
+    """Execute the application in a separate thread."""
+    def run():
+        execute_application("requirements.txt", "frontend.py")
+    
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+
+def process_app_build(current_chunk: str) -> None:
+    """Process and display application build data."""
+    if not st.session_state.final_output:
+        st.session_state.final_output = True
+        return
+    
+    st.session_state.final_output = False
+    try:
+        data = eval(current_chunk)
+        app_data = data.get('build_app', {})
+        
+        formatted_output = st.container()
+        with formatted_output:
+            st.markdown("### Application Code")
+            
+            # Save and display files
+            for file_name in ['frontend.py', 'backend.py']:
+                key = file_name.split('.')[0]
+                code = app_data.get(key, '')
+                
+                # Save file
+                if code:
+                    save_file_to_disk(code, file_name)
+                
+                # Display code
+                display_code_header(file_name)
+                st.code(code, language='python')
+            
+            col1, col2 = st.columns(2)
+            for col, file_name in zip([col1, col2], ['frontend.py', 'backend.py']):
+                with col:
+                    key = file_name.split('.')[0]
+                    code = app_data.get(key, '')
+                    st.download_button(
+                        label=f"Download {file_name}",
+                        data=code,
+                        file_name=file_name,
+                        mime="text/plain"
+                    )
+    except Exception as e:
+        logger.error(f"Error processing build_app: {e}")
+        st.error(f"Error processing build_app: {e}")
 
 def preprocess_content(content: str) -> str:
     """Preprocess content for proper markdown rendering."""
@@ -13,6 +77,19 @@ def preprocess_content(content: str) -> str:
 
 def preprocess_requirements(content: str) -> str:
     """Preprocess requirements.txt content by removing code blocks and extra whitespace."""
+    # Built-in Python modules that shouldn't be in requirements.txt
+    builtin_modules = {
+        'os', 'sys', 'logging', 'tempfile', 'threading', 'datetime', 
+        'time', 'json', 're', 'math', 'random', 'typing', 'collections',
+        'pathlib', 'subprocess', 'shutil', 'traceback'
+    }
+    
+    # Essential packages that must be included
+    essential_packages = {
+        'streamlit',
+        'python-dotenv'
+    }
+    
     # Remove code block markers
     content = content.replace('```', '')
     
@@ -22,10 +99,32 @@ def preprocess_requirements(content: str) -> str:
     # Handle literal backslashes properly
     content = content.replace('\\', '')
     
-    # Remove extra whitespace and trailing/leading newlines
-    content = content.strip()
+    # Split content into lines and process each requirement
+    lines = content.strip().split('\n')
+    valid_requirements = []
     
-    return content
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+            
+        # Get package name without version
+        package_name = line.split('==')[0].split('>=')[0].strip()
+        
+        # Skip if it's a built-in module
+        if package_name in builtin_modules:
+            continue
+            
+        valid_requirements.append(line)
+    
+    # Add essential packages if they're not already included
+    existing_packages = {req.split('==')[0].split('>=')[0].strip() for req in valid_requirements}
+    for package in essential_packages:
+        if package not in existing_packages:
+            valid_requirements.append(package)
+    
+    # Join lines back together
+    return '\n'.join(valid_requirements)
 
 def extract_message_content(current_chunk: str) -> Optional[str]:
     """Extract content from message chunks using different quote patterns."""
@@ -136,41 +235,6 @@ def display_code_header(filename: str) -> None:
         unsafe_allow_html=True
     )
 
-def process_app_build(current_chunk: str) -> None:
-    """Process and display application build data."""
-    if not st.session_state.final_output:
-        st.session_state.final_output = True
-        return
-    
-    st.session_state.final_output = False
-    try:
-        data = eval(current_chunk)
-        app_data = data.get('build_app', {})
-        
-        formatted_output = st.container()
-        with formatted_output:
-            st.markdown("### Application Code")
-            
-            for file_name in ['frontend.py', 'backend.py']:
-                key = file_name.split('.')[0]
-                display_code_header(file_name)
-                st.code(app_data.get(key, ''), language='python')
-            
-            col1, col2 = st.columns(2)
-            for col, file_name in zip([col1, col2], ['frontend.py', 'backend.py']):
-                with col:
-                    key = file_name.split('.')[0]
-                    code = app_data.get(key, '')
-                    st.download_button(
-                        label=f"Download {file_name}",
-                        data=code,
-                        file_name=file_name,
-                        mime="text/plain"
-                    )
-    except Exception as e:
-        logger.error(f"Error processing build_app: {e}")
-        st.error(f"Error processing build_app: {e}")
-
 def process_content_with_download(
     current_chunk: str,
     file_name: str,
@@ -185,6 +249,8 @@ def process_content_with_download(
             # Special handling for requirements.txt
             if file_name == "requirements.txt":
                 processed_content = preprocess_requirements(content)
+                # Save requirements.txt
+                save_file_to_disk(processed_content, file_name)
             else:
                 processed_content = preprocess_content(content)
                 
@@ -201,6 +267,7 @@ def process_content_with_download(
                         file_name=file_name,
                         mime="text/plain"
                     )
+                            
     except Exception as e:
         logger.error(f"Error processing {file_name}: {e}")
         st.error(f"Error processing {file_name}: {e}")
