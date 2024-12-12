@@ -20,7 +20,8 @@ def stream_code_generation(query: str, history: list):
     """
     payload = {
         "query": query,
-        "history": history
+        "history": history,
+        "library": st.session_state['library_name']
     }
 
     headers = {
@@ -73,7 +74,8 @@ def stream_error_handling(task: str, code: str, error: str, history: list):
         "task": task,
         "code": code,
         "error": error,
-        "history": history
+        "history": history,
+        "library": st.session_state['library_name']
     }
 
     headers = {
