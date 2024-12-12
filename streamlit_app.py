@@ -143,7 +143,7 @@ if st.session_state.logged_in:
                 st.session_state.library_name = library
                 st.rerun()
             
-            if st.button("🛠️ App Builder", disabled=library=='Llama Index'):
+            if st.button("🛠️ App Builder", disabled=library=='LlamaIndex'):
                 st.session_state.current_page = 'app_builder'
                 st.session_state.library_name = library
                 st.rerun()
