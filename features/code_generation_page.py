@@ -2,6 +2,22 @@ import streamlit as st
 import traceback
 from utils.api_helpers import stream_application_build
 import logging
+from pathlib import Path
+from utils.app_launcher import execute_application
+import threading
+
+@st.fragment
+def launch_application():
+    st.button("🚀 Launch Application", on_click=run_app_in_thread, type="primary")
+    st.info("Click the button above to start the application in a new window")
+
+def run_app_in_thread():
+    """Execute the application in a separate thread."""
+    def run():
+        execute_application("requirements.txt", "frontend.py")
+    
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
 
 def code_generation_interface():
     logger = logging.getLogger(__name__)
@@ -85,7 +101,11 @@ def code_generation_interface():
                 progress_container.empty()
                 
                 if full_response:
-                    st.success("✅ Application built successfully!")
+                    success_container = st.success("✅ Application built successfully!")
+                    
+                    # Check if required files exist and add launch button
+                    if Path("requirements.txt").exists() and Path("frontend.py").exists():
+                        launch_application()
                     
                     # Display final content directly in the UI
                     for stage, content in st.session_state['stage_content'].items():
