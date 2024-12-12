@@ -10,7 +10,9 @@ from data_load.process_github_repo.load_ipynb_details_to_snowflake import load_i
 from data_load.process_github_repo.process_md_file import process_md_files
 from data_load.process_github_repo.load_md_details_to_snowflake import load_markdown_data_to_snowflake
 
-# Default DAG arguments
+
+library_name='langchain'
+
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -21,7 +23,7 @@ default_args = {
     'start_date': datetime(2023, 11, 27),
 }
 
-# Define the DAG
+
 with DAG(
     'github_repo_processing_dag',
     default_args=default_args,
@@ -36,8 +38,8 @@ with DAG(
     task_id='clone_repo',
     python_callable=clone_repo,
     op_kwargs={
-        'repo_url': "https://github.com/langchain-ai/langgraph",
-        'repo_dir': "/tmp/langgraph_repo",
+        'repo_url': "https://github.com/langchain-ai/langchain",
+        'repo_dir': "/tmp/langchain_repo",
     },
     )
 
@@ -48,7 +50,7 @@ with DAG(
     list_files = PythonOperator(
         task_id='list_files',
         python_callable=extract_structures_from_repo,
-        op_kwargs={'code_root': "/tmp/langgraph_repo"},
+        op_kwargs={'code_root': "/tmp/langchain_repo"},
          provide_context=True,
     )
 
@@ -60,6 +62,7 @@ with DAG(
     process_py_task = PythonOperator(
         task_id='process_py_files',
         python_callable=process_python_files,
+        op_kwargs={'library_name':library_name},
         provide_context=True,
     )
 
@@ -78,6 +81,7 @@ with DAG(
     process_ipynb_task = PythonOperator(
         task_id='process_ipynb_files',
         python_callable=process_ipynb_files,
+        op_kwargs={'library_name':library_name},
         provide_context=True,
     )
 
@@ -95,6 +99,7 @@ with DAG(
     process_md_task = PythonOperator(
         task_id='process_md_files',
         python_callable=process_md_files,
+        op_kwargs={'library_name':library_name},
         provide_context=True,
     )
 

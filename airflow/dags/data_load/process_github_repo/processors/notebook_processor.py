@@ -159,7 +159,7 @@ def extract_notebook_cells(filepath) :
                 processed_cells.append({
                     "file_path": str(filepath),
                     "file_name": filepath.name,
-                    "folder_name": folder_name,  # Added folder name
+                    "folder_name": folder_name, 
                     "cell_number": index + 1,
                     "code": source_content,
                     "markdown_above": markdown_above,
@@ -198,11 +198,9 @@ def extract_consolidated_notebook(filepath: Path) -> Dict[str, Any]:
         json.JSONDecodeError: If the notebook is not valid JSON
         UnicodeDecodeError: If the file encoding is not supported
     """
-    if not filepath.exists():
-        error_msg = f"Notebook file not found: {filepath}"
-        print(f"Error: {error_msg}")
-        raise FileNotFoundError(error_msg)
+    filepath = Path(filepath)
     try:
+
         with open(filepath, 'r', encoding='utf-8') as f:
             try:
                 notebook_data = json.load(f)

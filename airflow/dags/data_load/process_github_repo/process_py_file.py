@@ -1,10 +1,13 @@
 import pandas as pd
 from data_load.process_github_repo.processors.python_processor import extract_python_structures 
-def process_python_files(**kwargs):
+
+
+def process_python_files(library_name: str, **kwargs):
     """
     Process a list of Python files to extract global statements, standalone functions, and class methods.
 
     Args:
+        library_name (str): The name of the library to add to the DataFrames
         py_files (list): List of Python file paths to process
 
     Returns:
@@ -30,11 +33,21 @@ def process_python_files(**kwargs):
     for py_file in py_files:
         try:
             structures = extract_python_structures(py_file)
-            all_global_statements.extend(structures.get('global_statements', []))
-            all_standalone_functions.extend(structures.get('standalone_functions', []))
-            
+            global_statements = structures.get('global_statements', [])
+            for statement in global_statements:
+                statement['library_name'] = library_name 
+            all_global_statements.extend(global_statements)
+
+            standalone_functions = structures.get('standalone_functions', [])
+            for function in standalone_functions:
+                function['library_name'] = library_name
+            all_standalone_functions.extend(standalone_functions)
+
             for cls in structures.get('classes', []):
-                all_class_methods.extend(cls.get('methods', []))
+                methods = cls.get('methods', [])
+                for method in methods:
+                    method['library_name'] = library_name
+                all_class_methods.extend(methods)
         except Exception as e:
             print(f"Error processing Python file {py_file}: {e}")
 
@@ -45,13 +58,11 @@ def process_python_files(**kwargs):
         'class_methods': pd.DataFrame(all_class_methods) if all_class_methods else pd.DataFrame(),
     }
 
-    # Print summaries
     print(f'Total number of global statements: {len(results["global_statements"])}')
     print(f'Total number of standalone functions: {len(results["standalone_functions"])}')
     print(f'Total number of class methods: {len(results["class_methods"])}')
 
 
-    # Push the results to XCom
     ti.xcom_push(key='python_processing_results', value=results)
 
     return results

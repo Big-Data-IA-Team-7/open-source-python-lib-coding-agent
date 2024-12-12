@@ -1,7 +1,7 @@
 import pandas as pd
 from data_load.process_github_repo.processors.markdown_processor import extract_markdown_content
 
-def process_md_files(**kwargs):
+def process_md_files(library_name: str,**kwargs):
     """
     Process a list of md files to extract markdown content
     Args:
@@ -26,6 +26,8 @@ def process_md_files(**kwargs):
     for md_file in md_files:
         try:
             markdown_cells = extract_markdown_content(md_file)
+            for cell in markdown_cells:
+                cell['library_name'] = library_name
             all_markdown_cells.extend(markdown_cells)
         except Exception as e:
             print(f"Error processing notebook {md_file}: {e}")
