@@ -20,7 +20,6 @@ COPY ./features /code/features
 COPY ./auth /code/auth
 COPY ./langgraph_graphs /code/langgraph_graphs
 COPY ./utils /code/utils
-COPY .env /code/.env
 COPY ./streamlit_app.py /code/streamlit_app.py
 COPY ./logging_module /code/logging_module
 
