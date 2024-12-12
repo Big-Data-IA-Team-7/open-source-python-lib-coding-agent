@@ -16,6 +16,7 @@ class InputState:
     """
 
     messages: Annotated[List[AnyMessage], add_messages]
+    library: str = field(default="")
 
 @dataclass(kw_only=True)
 class AgentState(InputState):

@@ -115,6 +115,7 @@ async def query_database(
     """Retrieve code based on the documents from an SQL agent.
     
     This function uses an SQL agent to fetch relevant code from Snowflake for a given document.
+    If no class or API names are provided, returns an empty list without querying the database.
     
     Args:
         state (ResearcherState): The current state of the researcher, including the user's question.
@@ -122,7 +123,13 @@ async def query_database(
 
     Returns:
         dict[str, list[tuple[str, ...]]: A dictionary with a 'library_code' key containing the list of code retrieved from the Snowflake db.
+                                       Returns an empty list if no names are provided.
     """
+    names = set(state.class_names) | set(state.api_names)  # Combine both lists and remove duplicates
+    
+    # Return early if no names to query
+    if not names:
+        return {"library_code": []}
 
     db = SQLDatabase.from_uri(
         f"snowflake://{configuration.SNOWFLAKE_USER}:"
@@ -134,9 +141,7 @@ async def query_database(
         f"role={configuration.SNOWFLAKE_ROLE}"
     )
 
-    names = set(state.class_names) | set(state.api_names)  # Combine both lists and remove duplicates
     formatted_names = ", ".join(f"'{name}'" for name in names)
-
     query = f"""
     SELECT code FROM EDW.GITHUB_CLASSES WHERE CLASS_NAME IN ({formatted_names})
     UNION

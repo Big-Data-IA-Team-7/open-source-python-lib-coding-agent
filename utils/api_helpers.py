@@ -123,7 +123,8 @@ def stream_application_build(query: str, history: list):
     """
     payload = {
         "query": query,
-        "history": history
+        "history": history,
+        "library": st.session_state['library_name']
     }
 
     headers = {

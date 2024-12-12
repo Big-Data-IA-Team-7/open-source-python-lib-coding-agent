@@ -7,14 +7,9 @@ from auth.Logout import logout
 
 from features.how_to_guide_page import how_to_guide_interface
 from features.error_handling_page import error_handling_interface
-from features.code_generation_page import code_generation_interface
 from features.github_repo_page import github_repo_management
 from features.github_credentials_page import github_credentials
-from logging_module.logging_config import setup_logging
-
-load_dotenv()
-logger = setup_logging()
-
+from features.code_generation_page import code_generation_interface
 # Landing page function
 def landing_page():
     st.title("🐍 Python Library Coding Agent")
@@ -61,6 +56,9 @@ if 'logged_in' not in st.session_state:
 if 'current_page' not in st.session_state:
     st.session_state.current_page = 'landing'
 
+if 'library_name' not in st.session_state:
+    st.session_state.library_name = None
+
 # Set page configuration
 st.set_page_config(
     page_title='Open Source Code Agent',
@@ -79,11 +77,10 @@ elif st.session_state.logged_in and st.session_state.current_page == 'how_to_gui
     how_to_guide_interface()
 elif st.session_state.logged_in and st.session_state.current_page == 'error_handling':
     error_handling_interface()
-elif st.session_state.logged_in and st.session_state.current_page == 'app_builder':
-    code_generation_interface()
 elif st.session_state.logged_in and st.session_state.current_page == 'github':
     github_repo_management()
-
+elif st.session_state.logged_in and st.session_state.current_page == 'app_builder':
+    code_generation_interface()
 elif st.session_state.current_page == 'githubcredentials':
     github_credentials()
 elif st.session_state.current_page == 'logout':  # Handle logout page
@@ -114,7 +111,7 @@ if st.session_state.logged_in:
 
             - **📖 How-to Guide:**  Access step-by-step tutorials and instructions to help you integrate and use various Python libraries effectively.  
             - **🚨 Error Handling:** Troubleshoot common issues and find expert-curated solutions for Python library errors.  
-            - **🛠️ App Builder:**  Generate custom applications and workflows using pre-built templates and tools. *(Note: Disabled when "Llama Index" is selected.)*  
+            - **🛠️ App Builder:**  Generate custom applications and workflows using pre-built templates and tools. *(Note: Disabled when "LlamaIndex" is selected.)*  
             - **🚀 GitHub Commit:**  Push the generated code to your existing GitHub repository. Easily commit the latest code changes without needing to manually copy or upload files.  
             - **🚪 Logout:**  Securely log out of your session to ensure your data and account remain protected.  
 
@@ -126,33 +123,44 @@ if st.session_state.logged_in:
         st.title(f"Welcome, {st.session_state.get('user_name', 'User')}")
         library = st.selectbox(
             "Choose a library to explore", 
-            ["", "LangGraph", "LangChain", "Llama Index"],
+            ["LangGraph", "LangChain", "LlamaIndex"],
             help="Choose a library to explore its features and functionality."
-                )
+        )
         st.session_state.library = library
 
-        if library=='Llama Index':
-            st.error("Llama Index is doesn't support App Builder.")
-        if st.button("📖 How-to Guide"):
-            st.session_state.current_page = 'how_to_guide'
-            st.rerun()
+        # Only show buttons if a library is selected
+        if library:  # This means library is not empty string
+            if library == 'LlamaIndex':
+                st.error("LlamaIndex does not support App Builder.")
+                
+            if st.button("📖 How-to Guide"):
+                st.session_state.current_page = 'how_to_guide'
+                st.session_state.library_name = library
+                st.rerun()
 
-        if st.button("🚨 Error Handling"):
-            st.session_state.current_page = 'error_handling'
-            st.rerun()
+            if st.button("🚨 Error Handling"):
+                st.session_state.current_page = 'error_handling'
+                st.session_state.library_name = library
+                st.rerun()
+            
+            if st.button("🛠️ App Builder", disabled=library=='Llama Index'):
+                st.session_state.current_page = 'app_builder'
+                st.session_state.library_name = library
+                st.rerun()
+            
+            if st.button("🚀 GitHub Commit"):
+                st.session_state.current_page = 'githubcredentials'
+                st.session_state.library_name = library
+                st.rerun()
+        else:
+            st.info("Please select a library to explore its features")
         
-        if st.button("🛠️ App Builder",disabled=library=='Llama Index'):
-            st.session_state.current_page = 'app_builder'
-            st.rerun()
-        
-        if st.button("🚀 GitHub Commit"):
-            st.session_state.current_page = 'githubcredentials'
-            st.rerun()
-        
+        # Keep logout button always accessible
         if st.button("🚪 Logout"):
             st.session_state.current_page = 'logout'
             st.rerun()
-    
+
+        # Keep GitHub credentials info if on that page
         if st.session_state.current_page == 'githubcredentials':
             st.markdown("---")
             st.subheader("Generate GitHub Personal Access Token (PAT)")

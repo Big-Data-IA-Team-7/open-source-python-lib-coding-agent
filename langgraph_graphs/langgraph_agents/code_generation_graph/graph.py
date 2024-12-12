@@ -24,7 +24,7 @@ async def conduct_research(state: AgentState) -> dict[str, Any]:
         dict[str, list[str]]: A dictionary with 'documents' containing the research results and
                               'steps' containing the remaining research steps.
     """
-    result = await researcher_graph.ainvoke({"question": state.research_steps[0]})
+    result = await researcher_graph.ainvoke({"question": state.research_steps[0], "library": state.library})
 
     logger.debug(f"Result: {result}")
 
@@ -116,11 +116,11 @@ async def build_app(
             context=context
             )
     else:
-        config = RunnableConfig(
-            configurable={
-                "response_model": "anthropic/claude-3-5-sonnet-20241022"
-            }
-        )
+        # config = RunnableConfig(
+        #     configurable={
+        #         "response_model": "anthropic/claude-3-5-sonnet-20241022"
+        #     }
+        # )
         configuration = AgentConfiguration.from_runnable_config(config)
         max_tokens_value = 4096
         model = load_chat_model(configuration.response_model, max_tokens=max_tokens_value).with_structured_output(CodeGenerated)

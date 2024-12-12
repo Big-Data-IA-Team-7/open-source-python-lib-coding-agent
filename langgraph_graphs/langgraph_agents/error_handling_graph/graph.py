@@ -48,7 +48,7 @@ async def conduct_research(state: AgentState) -> dict[str, Any]:
         dict[str, list[str]]: A dictionary with 'documents' containing the research results and
                               'steps' containing the remaining research steps.
     """
-    result = await researcher_graph.ainvoke({"question": state.query})
+    result = await researcher_graph.ainvoke({"question": state.query, "library": state.library})
 
     return {"documents": result["documents"], "library_code": result["library_code"]}
 
