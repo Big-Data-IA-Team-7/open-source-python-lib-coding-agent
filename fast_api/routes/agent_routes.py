@@ -33,7 +33,7 @@ async def generate_code(
             try:
                 messages = request.history + [{"role": "user", "content": request.query}]
                 
-                async for chunk in htg_graph.astream({"messages": messages}):
+                async for chunk in htg_graph.astream({"messages": messages, "library": request.library}):
                     # Ensure we're sending text/event-stream format correctly
                     yield f"data: {str(chunk)}\n\n"
                     
@@ -90,6 +90,7 @@ async def handle_error(
                     "task": request.task,
                     "code": request.code,
                     "error": request.error,
+                    "library": request.library,
                     "messages": messages}):
                     # Ensure we're sending text/event-stream format correctly
                     yield f"data: {str(chunk)}\n\n"
@@ -145,7 +146,7 @@ async def app_builder(
             try:
                 messages = request.history + [{"role": "user", "content": request.query}]
                 
-                async for chunk in cg_graph.astream({"messages": messages}):
+                async for chunk in cg_graph.astream({"messages": messages, "library": request.library}):
                     # Ensure we're sending text/event-stream format correctly
                     yield f"data: {str(chunk)}\n\n"
                     

@@ -22,6 +22,9 @@ class InputState:
     error: str = field(default="")
     """This is the error message that is displayed given by the user."""
     messages: Annotated[List[AnyMessage], add_messages]
+    """The messages list for the agent."""
+    library: str = field(default="")
+    """The library for sending to the retriever."""
 
 @dataclass(kw_only=True)
 class AgentState(InputState):
