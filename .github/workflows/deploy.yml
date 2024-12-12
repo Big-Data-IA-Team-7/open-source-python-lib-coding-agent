@@ -1,4 +1,5 @@
 name: Open Source Python Lib Coding Agent Deploy
+
 on:
   push:
     branches:
@@ -10,8 +11,24 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      #Step 1: Extracting all the env variables
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Docker
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      # Step 3: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 4: Extract all environment variables (No `run` required, these are just env settings)
       - name: Extracting all the env variables
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -37,27 +54,12 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 1: Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Step 2: Set up Docker
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
-
-      # Step 3: Log in to Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # Step 4: Build Docker image
+      # Step 5: Build Docker image
       - name: Build the Docker image
         run: |
           docker build -t login-app . || (echo "Docker build failed!" && exit 1)
 
-      # Step 5: Tag Docker image with timestamp
+      # Step 6: Tag Docker image with timestamp
       - name: Tag the Docker image with timestamp
         run: |
           TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
@@ -65,7 +67,7 @@ jobs:
           docker tag login-app:latest "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
           echo "Docker image tagged as: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
-      # Step 6: Push Docker image to Docker Hub
+      # Step 7: Push Docker image to Docker Hub
       - name: Push the Docker image to Docker Hub
         run: |
           TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
