@@ -73,3 +73,41 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
           echo "Pushing Docker image: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
           docker push "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+
+      # Step 8: Deploy to EC2
+      - name: SSH into EC2 and deploy the app
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+          SERVER_IP: ${{ secrets.EC2_SERVER_IP }}
+        run: |
+          echo "$PRIVATE_KEY" > cicd.pem
+          chmod 600 cicd.pem
+
+          # Start SSH agent and load the private key
+          eval "$(ssh-agent -s)"
+          ssh-add cicd.pem
+
+          ssh -o StrictHostKeyChecking=no ec2-user@$SERVER_IP << EOF
+            # Install Docker on Amazon Linux 2023 (if not already installed)
+            sudo dnf install -y docker
+            sudo systemctl enable docker
+            sudo systemctl start docker
+
+            # Add ec2-user to the docker group
+            sudo usermod -aG docker ec2-user
+
+            # Define the timestamp in EC2 as well
+            TIMESTAMP=\$(date +%Y%m%d%H)  # Same timestamp format (without seconds)
+
+            echo "Pulling Docker image: \$TIMESTAMP"
+
+            # Pull the Docker image from Docker Hub using the timestamp
+            docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
+
+            # Stop and remove any existing container
+            docker stop login-app || true
+            docker rm login-app || true
+
+            # Run the new container
+            docker run -d --name login-app -p 8501:8501 "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
+          EOF
