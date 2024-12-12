@@ -74,26 +74,20 @@ jobs:
           echo "Pushing Docker image: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
           docker push "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
-      # Step 8: Deploy to EC2
+      # Step 7: Deploy to EC2
       - name: SSH into EC2 and deploy the app
         env:
           PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
           SERVER_IP: ${{ secrets.EC2_SERVER_IP }}
         run: |
-          # Create the private key file
           echo "$PRIVATE_KEY" > cicd.pem
           chmod 600 cicd.pem
-          echo "Private key written successfully. Checking permissions..."
-          ls -l cicd.pem  # Ensure the file is there and has the right permissions
-          cat cicd.pem  # Optional: Print the contents (make sure it's correct)
 
           # Start SSH agent and load the private key
           eval "$(ssh-agent -s)"
           ssh-add cicd.pem
-          ssh-add -l  # List keys loaded into agent
 
-          # SSH into EC2 instance
-          ssh -v -o StrictHostKeyChecking=no ec2-user@$SERVER_IP << EOF
+          ssh -o StrictHostKeyChecking=no ec2-user@$SERVER_IP << EOF
             # Install Docker on Amazon Linux 2023 (if not already installed)
             sudo dnf install -y docker
             sudo systemctl enable docker
