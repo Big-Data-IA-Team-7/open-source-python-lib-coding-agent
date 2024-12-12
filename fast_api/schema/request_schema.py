@@ -37,12 +37,14 @@ class UserRegister(BaseModel):
 class HowToRequest(BaseModel):
     query: str
     history: List[Dict[str, str]] = []
+    library: str
 
 class ErrorRequest(BaseModel):
     task: str
     code: str
     error: str
     history: List[Dict[str, str]] = []
+    library: str
 
 
 class GitHubCredentials(BaseModel):
@@ -76,3 +78,4 @@ class RepoRequest(BaseModel):
 class AppBuildRequest(BaseModel):
     query: str
     history: List[Dict[str, str]] = []
+    library: str

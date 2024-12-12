@@ -16,6 +16,7 @@ class InputState:
     """
 
     messages: Annotated[List[AnyMessage], add_messages]
+    library: str = field(default="")
 
 @dataclass(kw_only=True)
 class AgentState(InputState):
@@ -33,7 +34,6 @@ class AgentState(InputState):
     """Original Query user sent it."""
     current_step: str = field(default="")
     """The current step in the research plan"""
-
 
 
 

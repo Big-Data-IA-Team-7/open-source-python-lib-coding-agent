@@ -10,7 +10,7 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 
 from langgraph_graphs.langgraph_agents.configuration import BaseConfiguration
-from langgraph_graphs.constants import PINECONE_DOCS_INDEX_NAME
+from langgraph_graphs.constants import LANGGRAPH_DOCS_INDEX_NAME, LANGCHAIN_DOCS_INDEX_NAME, LLAMAINDEX_DOCS_INDEX_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -31,13 +31,21 @@ enables the use of 'with' clause for the function and also guarantees cleanup ev
 '''
 @contextmanager
 def make_pinecone_retriever(
-    configuration: BaseConfiguration, embedding_model: Embeddings
+    configuration: BaseConfiguration, embedding_model: Embeddings, library: str
 ) -> Iterator[BaseRetriever]:
 
     pinecone_api_key = os.environ.get("PINECONE_API_KEY", "not_provided")
 
+    index_mapping = {
+        'LangGraph': LANGGRAPH_DOCS_INDEX_NAME,
+        'LangChain': LANGCHAIN_DOCS_INDEX_NAME,
+        'LlamaIndex': LLAMAINDEX_DOCS_INDEX_NAME
+    }
+
+    index_name = index_mapping[library]
+
     vectorstore = PineconeVectorStore(
-        index_name=PINECONE_DOCS_INDEX_NAME,
+        index_name=index_name,
         pinecone_api_key=pinecone_api_key,
         embedding=embedding_model
     )
@@ -48,6 +56,7 @@ def make_pinecone_retriever(
 @contextmanager
 def make_retriever(
     config: RunnableConfig,
+    library: str
 ) -> Iterator[BaseRetriever]:
     """Create a retriever for the agent, based on the current configuration."""
     # Create a BaseConfiguration object from the provided config
@@ -58,7 +67,7 @@ def make_retriever(
     match configuration.retriever_provider:
         case "pinecone":
             # Use Pinecone retriever when configured
-            with make_pinecone_retriever(configuration, embedding_model) as retriever:
+            with make_pinecone_retriever(configuration, embedding_model, library) as retriever:
                 yield retriever
 
         case _:
