@@ -66,7 +66,7 @@ async def retrieve_documents(
         dict[str, list[Document]]: A dictionary with a 'documents' key containing the list of retrieved documents.
     """
     try:
-        with retrieval.make_retriever(config) as retriever:
+        with retrieval.make_retriever(config, state.library) as retriever:
             documents = await retriever.ainvoke(state.query, config)
             updated_docs = replace_s3_locations_with_content(documents)
             response = remove_code_file_placeholders(updated_docs)
@@ -185,7 +185,7 @@ def retrieve_in_parallel(state: ResearcherState) -> list[Send]:
         - Each Send object targets the "retrieve_documents" node with the corresponding query.
     """
     return [
-        Send("retrieve_documents", QueryState(query=query)) for query in state.queries
+        Send("retrieve_documents", QueryState(query=query, library=state.library)) for query in state.queries
     ]
 
 # Define the graph

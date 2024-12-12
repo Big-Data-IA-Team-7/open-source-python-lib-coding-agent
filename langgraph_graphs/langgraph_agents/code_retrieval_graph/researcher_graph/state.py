@@ -15,6 +15,7 @@ class QueryState:
     """Private state for the retrieve_documents node in the researcher graph."""
 
     query: str
+    library: str
 
 @dataclass(kw_only=True)
 class SqlState:
@@ -37,4 +38,4 @@ class ResearcherState:
     """Populated by the retriever. This is a list of documents that the agent can reference."""
     library_code: Annotated[list[tuple[str, ...]], reduce_codes] = field(default_factory=list)
     """A list of code blocks for various classes and APIs retrieved from the Snowflake DB."""
-    library: str = field
+    library: str = field(default="")
