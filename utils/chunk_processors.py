@@ -8,10 +8,22 @@ from utils.app_launcher import execute_application
 
 logger = logging.getLogger(__name__)
 
-def save_file_to_disk(content: str, filename: str) -> bool:
-    """Save content to a file on disk."""
+def save_file_to_disk(content: str, filename: str, project_dir: str = "generated_app") -> bool:
+    """
+    Save content to a file in the project directory.
+    
+    Args:
+        content: Content to save
+        filename: Name of the file
+        project_dir: Directory to save the file in
+    """
     try:
-        with open(filename, 'w') as f:
+        # Create project directory if it doesn't exist
+        Path(project_dir).mkdir(exist_ok=True)
+        
+        # Save file in project directory
+        file_path = Path(project_dir) / filename
+        with open(file_path, 'w') as f:
             f.write(content)
         return True
     except Exception as e:
@@ -65,6 +77,7 @@ def process_app_build(current_chunk: str) -> None:
                         file_name=file_name,
                         mime="text/plain"
                     )
+
     except Exception as e:
         logger.error(f"Error processing build_app: {e}")
         st.error(f"Error processing build_app: {e}")
@@ -249,10 +262,12 @@ def process_content_with_download(
             # Special handling for requirements.txt
             if file_name == "requirements.txt":
                 processed_content = preprocess_requirements(content)
-                # Save requirements.txt
+                # Save requirements.txt to project directory
                 save_file_to_disk(processed_content, file_name)
             else:
                 processed_content = preprocess_content(content)
+                # Save other files to project directory
+                save_file_to_disk(processed_content, file_name)
                 
             formatted_output = st.container()
             with formatted_output:

@@ -102,10 +102,14 @@ def validate_credentials(credentials: GitHubCredentials):
     return {"message": result}
 
 @router.post("/commit-and-push/")
-def commit_and_push_code(repo_details: RepoDetails, credentials: GitHubCredentials):
-    repo_owner = repo_details.repo_url.split('/')[3]
-    repo_path = os.path.join(os.getcwd(), repo_details.repo_url.split('/')[-1].replace(".git", ""))
-    
+def commit_and_push_to_github(repo_details: RepoDetails, credentials: GitHubCredentials):
+    repo_url = repo_details.repo_url
+    commit_message = repo_details.commit_message
+    token = credentials.token  # Get token from request
+
+    # Path to the folder containing the files to be uploaded
+    folder_path = repo_details.folder_path
+
     # Clone the repository if it doesn't exist locally
     if not os.path.exists(repo_path):
         try:
