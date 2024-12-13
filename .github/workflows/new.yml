@@ -16,7 +16,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      #Step 2: Deploy to EC2
+      # Step 2: Deploy to EC2
       - name: SSH into EC2 and deploy the app
         env:
           PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
@@ -32,10 +32,17 @@ jobs:
 
           # SSH into the EC2 instance and run deployment commands
           ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP << EOF
-            # Install Docker on Ubuntu 24.04
-            docker login
+            # Update package lists
             sudo apt-get update
+
+            # Fix broken dependencies
+            sudo apt --fix-broken install -y
+
+            # Install Docker on Ubuntu 24.04
             sudo apt-get install -y docker.io
             sudo systemctl enable docker
             sudo systemctl start docker
+
+            # Verify Docker installation
+            docker --version
           EOF
