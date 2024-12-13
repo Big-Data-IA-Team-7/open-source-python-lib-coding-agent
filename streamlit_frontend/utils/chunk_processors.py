@@ -80,20 +80,6 @@ def process_app_build(current_chunk: str) -> None:
                 # Display code
                 display_code_header(file_name)
                 st.code(code, language='python')
-            
-            col1, col2 = st.columns(2)
-            for col, file_name in zip([col1, col2], ['frontend.py', 'backend.py']):
-                with col:
-                    key = file_name.split('.')[0]
-                    code = app_data.get(key, '')
-                    # Clean the code again for download
-                    code = clean_code(code)
-                    st.download_button(
-                        label=f"Download {file_name}",
-                        data=code,
-                        file_name=file_name,
-                        mime="text/plain"
-                    )
 
     except Exception as e:
         logger.error(f"Error processing build_app: {e}")
@@ -111,7 +97,7 @@ def preprocess_requirements(content: str) -> str:
     builtin_modules = {
         'os', 'sys', 'logging', 'tempfile', 'threading', 'datetime', 
         'time', 'json', 're', 'math', 'random', 'typing', 'collections',
-        'pathlib', 'subprocess', 'shutil', 'traceback'
+        'pathlib', 'subprocess', 'shutil', 'traceback', 'getpass'
     }
     
     # Essential packages that must be included
@@ -297,12 +283,6 @@ def process_content_with_download(
                             st.markdown(processed_content)
                         else:
                             st.code(processed_content, language='text')
-                        st.download_button(
-                            label=f"Download {file_name}",
-                            data=processed_content,
-                            file_name=file_name,
-                            mime="text/plain"
-                        )
             else:
                 processed_content = preprocess_content(content)
                 # Save other files to project directory
@@ -315,12 +295,6 @@ def process_content_with_download(
                             st.markdown(processed_content)
                         else:
                             st.code(processed_content, language='text')
-                        st.download_button(
-                            label=f"Download {file_name}",
-                            data=processed_content,
-                            file_name=file_name,
-                            mime="text/plain"
-                        )
                             
     except Exception as e:
         logger.error(f"Error processing {file_name}: {e}")

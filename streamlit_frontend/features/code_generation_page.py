@@ -8,20 +8,68 @@ import threading
 import requests
 import os
 
+logger = logging.getLogger(__name__)
+
 FAST_API_URL = os.getenv("FAST_API_URL")
 
+def get_host_ip():
+    """Get the host IP address that should be used for accessing the app."""
+    # In Docker, we want to use localhost since we're exposing the ports
+    return 'localhost'
+
 def run_app_in_thread():
-    """Execute the application in a separate thread."""
-    def run():
-        execute_application("generated_app/requirements.txt", "generated_app/frontend.py")
-    
-    thread = threading.Thread(target=run, daemon=True)
-    thread.start()
+    """Execute the application in a non-threaded manner to maintain session state."""
+    try:
+        logger.info("Starting application launch")
+        success, port = execute_application(
+            "generated_app/requirements.txt",
+            "generated_app/frontend.py"
+        )
+        
+        if success and port:
+            host_ip = get_host_ip()
+            app_url = f"http://{host_ip}:{port}"
+            logger.info(f"Application launched successfully. URL: {app_url}")
+            return True, app_url
+        else:
+            logger.error("Failed to launch application")
+            return False, "Failed to launch application"
+            
+    except Exception as e:
+        logger.error(f"Error in application launch: {str(e)}")
+        return False, str(e)
 
 @st.fragment
 def launch_application():
-    st.button("🚀 Launch Application", on_click=run_app_in_thread, type="primary")
-    st.info("Click the button above to start the application in a new window")
+    # Initialize placeholders
+    info_placeholder = st.empty()
+    url_placeholder = st.empty()
+    debug_placeholder = st.empty()
+    
+    # Show launch button
+    if st.button("🚀 Launch Application", type="primary"):
+        info_placeholder.info("Starting application...")
+        success, result = run_app_in_thread()
+        
+        if success:
+            st.session_state['app_url'] = result
+            info_placeholder.success("Application is running! Click the button below to open it in a new tab:")
+            url_placeholder.markdown(
+                f'<a href="{result}" target="_blank"><button style="background-color:#4CAF50;color:white;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;">🔗 Open App</button></a>',
+                unsafe_allow_html=True
+            )
+            
+            # Add debugging information
+            debug_placeholder.expander("Debug Information").code(f"""
+Host IP: {get_host_ip()}
+App URL: {result}
+In Docker: {os.path.exists('/.dockerenv')}
+Environment Variables: {dict(os.environ)}
+            """)
+        else:
+            info_placeholder.error(f"Error launching application: {result}")
+    else:
+        info_placeholder.info("Click the button below to start the application")
 
 @st.fragment
 def commit_to_github(folder_path: str):
@@ -182,8 +230,10 @@ def code_generation_interface():
                         except Exception as e:
                             logger.error(f"Error processing app data: {str(e)}")
                             st.error(f"Error processing application data: {str(e)}")
+                    else:
+                        st.error("Files not found!")
                 else:
-                    st.error("❌ Failed to build application")
+                    st.error("❌ Failed to build application. Try regenerating the application.")
                     
             except Exception as build_error:
                 logger.error(f"Build error: {str(build_error)}")

@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Building open source code agent"
 authors = ["Dipenpatel3 <patel.dipe@northeastern.edu>"]
 readme = "README.md"
-package-mode = false
+packages = [
+    { include = "fastapi_backend" },
+    { include = "streamlit_frontend" }
+]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
