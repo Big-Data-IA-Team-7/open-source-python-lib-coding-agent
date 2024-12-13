@@ -1,22 +1,21 @@
 from dotenv import load_dotenv
 import streamlit as st
-import os 
 from auth.register import register_user
 from auth.Login import login
 from auth.Logout import logout
 
 from features.how_to_guide_page import how_to_guide_interface
 from features.error_handling_page import error_handling_interface
-from features.github_repo_page import github_repo_management
 from features.github_credentials_page import github_credentials
 from features.code_generation_page import code_generation_interface
 
+from logging_module.logging_config import setup_logging
+logger = setup_logging()
+
 load_dotenv()
-FAST_API_URL = os.getenv("FAST_API_URL")
 # Landing page function
 def landing_page():
     st.title("🐍 Python Library Coding Agent")
-    st.write(FAST_API_URL)
     # Main description
     st.markdown("""
     Welcome to Python Library Coding Agent - where natural language meets code intelligence. 
@@ -80,8 +79,6 @@ elif st.session_state.logged_in and st.session_state.current_page == 'how_to_gui
     how_to_guide_interface()
 elif st.session_state.logged_in and st.session_state.current_page == 'error_handling':
     error_handling_interface()
-elif st.session_state.logged_in and st.session_state.current_page == 'github':
-    github_repo_management()
 elif st.session_state.logged_in and st.session_state.current_page == 'app_builder':
     code_generation_interface()
 elif st.session_state.current_page == 'githubcredentials':

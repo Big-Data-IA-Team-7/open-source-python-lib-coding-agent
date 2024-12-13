@@ -3,26 +3,47 @@ import sys
 import logging
 import os
 from typing import Tuple
-import streamlit as st
+import socket
+import time
 
 logger = logging.getLogger(__name__)
 
+def find_next_available_port(start_port=8502, end_port=8510) -> int:
+    """Find the next available port in our predefined range."""
+    for port in range(start_port, end_port + 1):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('0.0.0.0', port))
+                logger.info(f"Found available port: {port}")
+                return port
+        except socket.error:
+            continue
+    raise RuntimeError("No ports available in the specified range")
+
+def wait_for_port(port: int, host: str = '0.0.0.0', timeout: int = 30) -> bool:
+    """Wait for a port to become available."""
+    start_time = time.time()
+    while True:
+        if time.time() - start_time > timeout:
+            return False
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(1)
+                result = sock.connect_ex((host, port))
+                if result == 0:
+                    return True
+        except:
+            pass
+        time.sleep(1)
+
 def install_requirements(requirements_path: str) -> Tuple[bool, str]:
-    """
-    Install requirements from requirements.txt using pip.
-    
-    Args:
-        requirements_path: Path to requirements.txt file
-        
-    Returns:
-        Tuple of (success_bool, message_str)
-    """
+    """Install requirements from requirements.txt using pip."""
     try:
-        # Check if requirements file exists
         if not os.path.exists(requirements_path):
+            logger.error(f"Requirements file not found at {requirements_path}")
             return False, f"Requirements file not found at {requirements_path}"
             
-        # Install requirements using pip
+        logger.info(f"Installing requirements from {requirements_path}")
         process = subprocess.run(
             [sys.executable, "-m", "pip", "install", "-r", requirements_path],
             capture_output=True,
@@ -30,79 +51,70 @@ def install_requirements(requirements_path: str) -> Tuple[bool, str]:
             check=True
         )
         
+        logger.info("Requirements installed successfully")
         return True, "Requirements installed successfully"
         
-    except subprocess.CalledProcessError as e:
-        error_msg = f"Failed to install requirements: {e.stderr}"
-        logger.error(error_msg)
-        return False, error_msg
     except Exception as e:
-        error_msg = f"Unexpected error installing requirements: {str(e)}"
+        error_msg = f"Error installing requirements: {str(e)}"
         logger.error(error_msg)
         return False, error_msg
 
-def launch_streamlit_app(frontend_path: str) -> Tuple[bool, str]:
-    """
-    Launch the Streamlit application.
-    
-    Args:
-        frontend_path: Path to the frontend.py file
-        
-    Returns:
-        Tuple of (success_bool, message_str)
-    """
+def launch_streamlit_app(frontend_path: str) -> Tuple[bool, str, int]:
+    """Launch the Streamlit application."""
     try:
-        # Check if frontend file exists
         if not os.path.exists(frontend_path):
-            return False, f"Frontend file not found at {frontend_path}"
-            
-        # Launch streamlit app in a new process
+            logger.error(f"Frontend file not found at {frontend_path}")
+            return False, f"Frontend file not found at {frontend_path}", 0
+
+        port = find_next_available_port()
+        logger.info(f"Using port: {port}")
+        
+        # Construct the command with explicit host and port
+        cmd = [
+            "streamlit", "run", frontend_path,
+            "--server.address", "0.0.0.0",
+            "--server.port", str(port)
+        ]
+        
+        logger.info(f"Launching Streamlit with command: {' '.join(cmd)}")
+        
+        # Launch the process
         process = subprocess.Popen(
-            ["streamlit", "run", frontend_path],
+            cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
         
-        # Wait a short time to check for immediate failures
-        try:
-            process.wait(timeout=2)
-            if process.returncode is not None and process.returncode != 0:
-                stderr = process.stderr.read()
-                return False, f"Streamlit app failed to start: {stderr}"
-        except subprocess.TimeoutExpired:
-            # Process didn't exit within timeout - this is good!
-            # It means the app is probably running
-            pass
+        # Wait for the port to become available
+        if wait_for_port(port):
+            logger.info(f"Streamlit app successfully launched on port {port}")
+            return True, "Streamlit app launched successfully", port
+        else:
+            stderr = process.stderr.read() if process.stderr else "No error output available"
+            logger.error(f"Streamlit failed to start: {stderr}")
+            return False, f"Streamlit app failed to start: {stderr}", 0
             
-        return True, "Streamlit app launched successfully"
-        
     except Exception as e:
         error_msg = f"Failed to launch Streamlit app: {str(e)}"
         logger.error(error_msg)
-        return False, error_msg
+        return False, error_msg, 0
 
-def execute_application(requirements_path: str, frontend_path: str) -> None:
-    """
-    Main function to execute the application setup and launch.
+def execute_application(requirements_path: str, frontend_path: str) -> Tuple[bool, int]:
+    """Main function to execute the application setup and launch."""
+    logger.info("Starting application execution")
     
-    Args:
-        requirements_path: Path to requirements.txt file
-        frontend_path: Path to frontend.py file
-    """
-    # First install requirements
+    # Install requirements
     success, message = install_requirements(requirements_path)
     if not success:
-        st.error(message)
-        return
+        logger.error(f"Requirements installation failed: {message}")
+        return False, 0
     
-    st.success("Requirements installed successfully")
-    
-    # Then launch the streamlit app
-    success, message = launch_streamlit_app(frontend_path)
+    # Launch the app
+    success, message, port = launch_streamlit_app(frontend_path)
     if not success:
-        st.error(message)
-        return
+        logger.error(f"App launch failed: {message}")
+        return False, 0
         
-    st.success("Application launched successfully!")
-    st.info("You can access the application in your browser")
+    logger.info(f"Application successfully launched on port {port}")
+    return True, port

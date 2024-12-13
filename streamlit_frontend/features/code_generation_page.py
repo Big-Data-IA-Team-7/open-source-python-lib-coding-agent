@@ -8,20 +8,75 @@ import threading
 import requests
 import os
 
+logger = logging.getLogger(__name__)
+
 FAST_API_URL = os.getenv("FAST_API_URL")
 
+def get_host_ip():
+    """Get the host IP address that should be used for accessing the app."""
+    # In Docker, we want to use localhost since we're exposing the ports
+    return 'localhost'
+
 def run_app_in_thread():
-    """Execute the application in a separate thread."""
+    """Execute the application in a separate thread and update the UI with the URL."""
     def run():
-        execute_application("generated_app/requirements.txt", "generated_app/frontend.py")
+        try:
+            logger.info("Starting application launch in thread")
+            success, port = execute_application(
+                "generated_app/requirements.txt",
+                "generated_app/frontend.py"
+            )
+            
+            if success and port:
+                host_ip = get_host_ip()
+                app_url = f"http://{host_ip}:{port}"
+                logger.info(f"Application launched successfully. URL: {app_url}")
+                st.session_state['app_url'] = app_url
+                logger.info(f'Session state: {st.session_state['app_url']}')
+                st.rerun()
+            else:
+                logger.error("Failed to launch application")
+                st.session_state['launch_error'] = "Failed to launch application"
+                st.rerun()
+                
+        except Exception as e:
+            logger.error(f"Error in run_app_in_thread: {str(e)}")
+            st.session_state['launch_error'] = str(e)
+            st.rerun()
     
     thread = threading.Thread(target=run, daemon=True)
     thread.start()
 
 @st.fragment
 def launch_application():
-    st.button("🚀 Launch Application", on_click=run_app_in_thread, type="primary")
-    st.info("Click the button above to start the application in a new window")
+    if 'launch_error' in st.session_state:
+        st.error(f"Error launching application: {st.session_state['launch_error']}")
+        if st.button("🔄 Retry Launch"):
+            del st.session_state['launch_error']
+            st.rerun()
+    elif 'app_url' not in st.session_state:
+        st.button("🚀 Launch Application", on_click=run_app_in_thread, type="primary")
+        st.info("Click the button above to start the application")
+    else:
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.success("Application is running! Click the button to open it in a new tab:")
+        with col2:
+            # Using custom HTML to open in new tab
+            st.markdown(f'<a href="{st.session_state["app_url"]}" target="_blank"><button style="background-color:#4CAF50;color:white;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;">🔗 Open App</button></a>', unsafe_allow_html=True)
+        
+        # Add debugging information
+        with st.expander("Debug Information"):
+            st.code(f"""
+Host IP: {get_host_ip()}
+App URL: {st.session_state['app_url']}
+In Docker: {os.path.exists('/.dockerenv')}
+Environment Variables: {dict(os.environ)}
+            """)
+            
+        if st.button("🔄 Restart Application", type="secondary"):
+            del st.session_state['app_url']
+            st.rerun()
 
 @st.fragment
 def commit_to_github(folder_path: str):
@@ -182,8 +237,10 @@ def code_generation_interface():
                         except Exception as e:
                             logger.error(f"Error processing app data: {str(e)}")
                             st.error(f"Error processing application data: {str(e)}")
+                    else:
+                        st.error("Files not found!")
                 else:
-                    st.error("❌ Failed to build application")
+                    st.error("❌ Failed to build application. Try regenerating the application.")
                     
             except Exception as build_error:
                 logger.error(f"Build error: {str(build_error)}")
