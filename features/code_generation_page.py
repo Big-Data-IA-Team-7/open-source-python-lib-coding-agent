@@ -5,19 +5,65 @@ import logging
 from pathlib import Path
 from utils.app_launcher import execute_application
 import threading
+import requests
+import os
+
+FAST_API_URL = os.getenv("FAST_API_URL")
+
+def run_app_in_thread():
+    """Execute the application in a separate thread."""
+    def run():
+        execute_application("generated_app/requirements.txt", "generated_app/frontend.py")
+    
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
 
 @st.fragment
 def launch_application():
     st.button("🚀 Launch Application", on_click=run_app_in_thread, type="primary")
     st.info("Click the button above to start the application in a new window")
 
-def run_app_in_thread():
-    """Execute the application in a separate thread."""
-    def run():
-        execute_application("requirements.txt", "frontend.py")
-    
-    thread = threading.Thread(target=run, daemon=True)
-    thread.start()
+@st.fragment
+def commit_to_github(folder_path: str):
+    repo_url = st.text_input("Enter repository URL for GitHub:")
+    commit_message = st.text_input("Commit Message")
+    if st.button("🚀 Commit and Push", type="secondary"):
+        
+        response = requests.get(f"{FAST_API_URL}/git/check-github-credentials/{st.session_state.user_name}")
+        
+        if response.status_code == 200:
+            output = response.json()
+            if output.get("message") == "User has valid GitHub credentials.":
+                st.session_state.github_username = output.get("github_username")
+                st.session_state.github_token = output.get("github_token")
+                st.success("Github credentials found.")
+
+                # Commit and Push Button
+                with st.spinner("Committing and pushing changes..."):
+                    # Package the input data in the correct structure
+                    repo_details = {
+                        "repo_url": repo_url,
+                        "commit_message": commit_message,
+                        "folder_path": folder_path
+                    }
+
+                    credentials = {
+                        "username": st.session_state.github_username,
+                        "token": st.session_state.github_token
+                    }
+                    response = requests.post(f"{FAST_API_URL}/git/commit-and-push/", json={
+                        "repo_details": repo_details,
+                        "credentials": credentials
+                    })
+                    
+                    commit_result = response.json()
+                    if "message" in commit_result:
+                        st.success("Code committed and pushed successfully!")
+                    else:
+                        st.error(f"Unexpected response: {commit_result}")
+        
+            elif output.get("message") == "User does not have GitHub credentials.":
+                st.warning("GitHub credentials not found. Please go to the GitHub page to set up your username and Personal Access Token (PAT) first.")
 
 def code_generation_interface():
     logger = logging.getLogger(__name__)
@@ -43,8 +89,27 @@ def code_generation_interface():
 
         # Example cards in columns
         col1, col2 = st.columns(2)
-        example1 = "Create a LangGraph application for a Code Generation Assistant that can understand programming requirements, generate code with proper documentation, handle edge cases, and provide explanations for the implementation."
-        example2 = "Build a LangGraph application for a PDF-based RAG agent that can process PDF documents, extract relevant information, create embeddings, handle semantic search, and provide contextual responses with source citations."
+        example1 = """Develop a LangGraph Python Code Generation Assistant with the following capabilities:
+
+1. **Understanding Programming Requirements**
+    - Interpret user-provided programming specifications to comprehend the desired functionality.
+2. **Code Generation with Documentation**
+    - Produce code that includes comprehensive documentation, ensuring clarity and maintainability.
+3. **Implementation Explanation**
+    - Provide detailed explanations of the code implementation to facilitate user understanding."""
+        
+        example2 = """Build a **LangGraph PDF-Based RAG Agent** that can operate locally to assist with information retrieval from PDFs. The agent should include the following features:
+
+1. **PDF Loading and Processing**
+    - Allow users to upload and load PDF documents from local storage.
+2. **Semantic Embedding Generation**
+    - Store embeddings locally to enable efficient reuse and avoid reprocessing.
+3. **Semantic Search**
+    - Build a semantic search index using the embeddings.
+    - Enable natural language querying to retrieve the most relevant passages or sections from the PDFs.
+4. **Contextual Response Generation**
+    - Combine retrieved passages with language model capabilities to generate clear and informative responses.
+    - Cite sources for the responses, including the PDF file name and page number."""
 
         with col1:
             if st.button("📟 Code Generation Assistant", help=example1, use_container_width=True):
@@ -104,15 +169,19 @@ def code_generation_interface():
                     success_container = st.success("✅ Application built successfully!")
                     
                     # Check if required files exist and add launch button
-                    if Path("requirements.txt").exists() and Path("frontend.py").exists():
+                    if (Path("generated_app/requirements.txt").exists() and 
+                        Path("generated_app/frontend.py").exists()):
                         launch_application()
-                    
-                    # Display final content directly in the UI
-                    for stage, content in st.session_state['stage_content'].items():
-                        if content:  # Only show non-empty stages
-                            st.subheader(f"{stage_messages.get(stage, stage)} - Complete ✓")
-                            st.markdown(content)
-                            st.divider()  # Add visual separation between stages
+
+                        generated_app_path = str(Path("generated_app").absolute())
+                        
+                        # Store the app files in session state
+                        try:
+                            # GitHub commit section
+                            commit_to_github(generated_app_path)
+                        except Exception as e:
+                            logger.error(f"Error processing app data: {str(e)}")
+                            st.error(f"Error processing application data: {str(e)}")
                 else:
                     st.error("❌ Failed to build application")
                     
