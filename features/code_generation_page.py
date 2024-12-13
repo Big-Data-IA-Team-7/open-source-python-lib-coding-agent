@@ -10,6 +10,14 @@ import os
 
 FAST_API_URL = os.getenv("FAST_API_URL")
 
+def run_app_in_thread():
+    """Execute the application in a separate thread."""
+    def run():
+        execute_application("generated_app/requirements.txt", "generated_app/frontend.py")
+    
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+
 @st.fragment
 def launch_application():
     st.button("🚀 Launch Application", on_click=run_app_in_thread, type="primary")
@@ -57,14 +65,6 @@ def commit_to_github(folder_path: str):
             elif output.get("message") == "User does not have GitHub credentials.":
                 st.warning("GitHub credentials not found. Please go to the GitHub page to set up your username and Personal Access Token (PAT) first.")
 
-def run_app_in_thread():
-    """Execute the application in a separate thread."""
-    def run():
-        execute_application("requirements.txt", "frontend.py")
-    
-    thread = threading.Thread(target=run, daemon=True)
-    thread.start()
-
 def code_generation_interface():
     logger = logging.getLogger(__name__)
     try:
@@ -89,8 +89,27 @@ def code_generation_interface():
 
         # Example cards in columns
         col1, col2 = st.columns(2)
-        example1 = "Create a LangGraph application for a Code Generation Assistant that can understand programming requirements, generate code with proper documentation, handle edge cases, and provide explanations for the implementation."
-        example2 = "Build a LangGraph application for a PDF-based RAG agent that can process PDF documents, extract relevant information, create embeddings, handle semantic search, and provide contextual responses with source citations."
+        example1 = """Develop a LangGraph Python Code Generation Assistant with the following capabilities:
+
+1. **Understanding Programming Requirements**
+    - Interpret user-provided programming specifications to comprehend the desired functionality.
+2. **Code Generation with Documentation**
+    - Produce code that includes comprehensive documentation, ensuring clarity and maintainability.
+3. **Implementation Explanation**
+    - Provide detailed explanations of the code implementation to facilitate user understanding."""
+        
+        example2 = """Build a **LangGraph PDF-Based RAG Agent** that can operate locally to assist with information retrieval from PDFs. The agent should include the following features:
+
+1. **PDF Loading and Processing**
+    - Allow users to upload and load PDF documents from local storage.
+2. **Semantic Embedding Generation**
+    - Store embeddings locally to enable efficient reuse and avoid reprocessing.
+3. **Semantic Search**
+    - Build a semantic search index using the embeddings.
+    - Enable natural language querying to retrieve the most relevant passages or sections from the PDFs.
+4. **Contextual Response Generation**
+    - Combine retrieved passages with language model capabilities to generate clear and informative responses.
+    - Cite sources for the responses, including the PDF file name and page number."""
 
         with col1:
             if st.button("📟 Code Generation Assistant", help=example1, use_container_width=True):
@@ -150,7 +169,8 @@ def code_generation_interface():
                     success_container = st.success("✅ Application built successfully!")
                     
                     # Check if required files exist and add launch button
-                    if Path("requirements.txt").exists() and Path("frontend.py").exists():
+                    if (Path("generated_app/requirements.txt").exists() and 
+                        Path("generated_app/frontend.py").exists()):
                         launch_application()
 
                         generated_app_path = str(Path("generated_app").absolute())

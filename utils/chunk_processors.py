@@ -30,13 +30,25 @@ def save_file_to_disk(content: str, filename: str, project_dir: str = "generated
         logger.error(f"Error saving {filename}: {e}")
         return False
 
-def run_app_in_thread():
-    """Execute the application in a separate thread."""
-    def run():
-        execute_application("requirements.txt", "frontend.py")
+def clean_code(code: str) -> str:
+    """Remove triple backticks and triple quotes from code."""
+    # Remove triple backticks at start and end
+    code = code.strip()
+    if code.startswith('```python'):
+        code = code[9:]
+    elif code.startswith('```'):
+        code = code[3:]
+    if code.endswith('```'):
+        code = code[:-3]
+        
+    # Remove triple quotes at start and end
+    code = code.strip()
+    if code.startswith('"""'):
+        code = code[3:]
+    if code.endswith('"""'):
+        code = code[:-3]
     
-    thread = threading.Thread(target=run, daemon=True)
-    thread.start()
+    return code.strip()
 
 def process_app_build(current_chunk: str) -> None:
     """Process and display application build data."""
@@ -58,6 +70,9 @@ def process_app_build(current_chunk: str) -> None:
                 key = file_name.split('.')[0]
                 code = app_data.get(key, '')
                 
+                # Clean the code by removing triple backticks and triple quotes
+                code = clean_code(code)
+                
                 # Save file
                 if code:
                     save_file_to_disk(code, file_name)
@@ -71,6 +86,8 @@ def process_app_build(current_chunk: str) -> None:
                 with col:
                     key = file_name.split('.')[0]
                     code = app_data.get(key, '')
+                    # Clean the code again for download
+                    code = clean_code(code)
                     st.download_button(
                         label=f"Download {file_name}",
                         data=code,
@@ -89,7 +106,7 @@ def preprocess_content(content: str) -> str:
     return content
 
 def preprocess_requirements(content: str) -> str:
-    """Preprocess requirements.txt content by removing code blocks and extra whitespace."""
+    """Preprocess requirements.txt content by removing code blocks, dot notation imports, and extra whitespace."""
     # Built-in Python modules that shouldn't be in requirements.txt
     builtin_modules = {
         'os', 'sys', 'logging', 'tempfile', 'threading', 'datetime', 
@@ -114,30 +131,38 @@ def preprocess_requirements(content: str) -> str:
     
     # Split content into lines and process each requirement
     lines = content.strip().split('\n')
-    valid_requirements = []
+    valid_requirements = set()  # Using a set to avoid duplicates
     
     for line in lines:
         line = line.strip()
         if not line:
             continue
             
-        # Get package name without version
-        package_name = line.split('==')[0].split('>=')[0].strip()
-        
-        # Skip if it's a built-in module
-        if package_name in builtin_modules:
-            continue
+        # Split on any whitespace or common separators
+        for part in line.replace(',', ' ').split():
+            # Skip empty parts
+            if not part:
+                continue
+                
+            # Get base package name without version or dot notation
+            package_name = part.split('==')[0].split('>=')[0].strip()
             
-        valid_requirements.append(line)
+            # Skip if it contains dot notation
+            if '.' in package_name:
+                # Get the root package name (before the first dot)
+                package_name = package_name.split('.')[0]
+            
+            # Skip if it's a built-in module
+            if package_name in builtin_modules:
+                continue
+                
+            valid_requirements.add(package_name)
     
-    # Add essential packages if they're not already included
-    existing_packages = {req.split('==')[0].split('>=')[0].strip() for req in valid_requirements}
-    for package in essential_packages:
-        if package not in existing_packages:
-            valid_requirements.append(package)
+    # Add essential packages
+    valid_requirements.update(essential_packages)
     
-    # Join lines back together
-    return '\n'.join(valid_requirements)
+    # Convert set to sorted list for consistent output
+    return '\n'.join(sorted(valid_requirements))
 
 def extract_message_content(current_chunk: str) -> Optional[str]:
     """Extract content from message chunks using different quote patterns."""
@@ -262,26 +287,40 @@ def process_content_with_download(
             # Special handling for requirements.txt
             if file_name == "requirements.txt":
                 processed_content = preprocess_requirements(content)
-                # Save requirements.txt to project directory
+                
                 save_file_to_disk(processed_content, file_name)
+                
+                formatted_output = st.container()
+                with formatted_output:
+                    with st.expander(expander_title):
+                        if display_type == 'markdown':
+                            st.markdown(processed_content)
+                        else:
+                            st.code(processed_content, language='text')
+                        st.download_button(
+                            label=f"Download {file_name}",
+                            data=processed_content,
+                            file_name=file_name,
+                            mime="text/plain"
+                        )
             else:
                 processed_content = preprocess_content(content)
                 # Save other files to project directory
                 save_file_to_disk(processed_content, file_name)
                 
-            formatted_output = st.container()
-            with formatted_output:
-                with st.expander(expander_title):
-                    if display_type == 'markdown':
-                        st.markdown(processed_content)
-                    else:
-                        st.code(processed_content, language='text')
-                    st.download_button(
-                        label=f"Download {file_name}",
-                        data=processed_content,
-                        file_name=file_name,
-                        mime="text/plain"
-                    )
+                formatted_output = st.container()
+                with formatted_output:
+                    with st.expander(expander_title):
+                        if display_type == 'markdown':
+                            st.markdown(processed_content)
+                        else:
+                            st.code(processed_content, language='text')
+                        st.download_button(
+                            label=f"Download {file_name}",
+                            data=processed_content,
+                            file_name=file_name,
+                            mime="text/plain"
+                        )
                             
     except Exception as e:
         logger.error(f"Error processing {file_name}: {e}")
