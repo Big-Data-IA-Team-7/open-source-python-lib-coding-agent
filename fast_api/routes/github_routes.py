@@ -109,7 +109,7 @@ def commit_and_push_to_github(repo_details: RepoDetails, credentials: GitHubCred
     token = credentials.token  # Get token from request
 
     # Path to the folder containing the files to be uploaded
-    folder_path = ""  # Path to the folder containing the files
+    folder_path = repo_details.folder_path
 
     # Clone the repository if it doesn't exist locally
     repo_name = repo_url.split('/')[-1].replace('.git', '')

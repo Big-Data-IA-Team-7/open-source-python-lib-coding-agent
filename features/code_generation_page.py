@@ -5,11 +5,57 @@ import logging
 from pathlib import Path
 from utils.app_launcher import execute_application
 import threading
+import requests
+import os
+
+FAST_API_URL = os.getenv("FAST_API_URL")
 
 @st.fragment
 def launch_application():
     st.button("🚀 Launch Application", on_click=run_app_in_thread, type="primary")
     st.info("Click the button above to start the application in a new window")
+
+@st.fragment
+def commit_to_github(folder_path: str):
+    repo_url = st.text_input("Enter repository URL for GitHub:")
+    commit_message = st.text_input("Commit Message")
+    if st.button("🚀 Commit and Push", type="secondary"):
+        
+        response = requests.get(f"{FAST_API_URL}/git/check-github-credentials/{st.session_state.user_name}")
+        
+        if response.status_code == 200:
+            output = response.json()
+            if output.get("message") == "User has valid GitHub credentials.":
+                st.session_state.github_username = output.get("github_username")
+                st.session_state.github_token = output.get("github_token")
+                st.success("Github credentials found.")
+
+                # Commit and Push Button
+                with st.spinner("Committing and pushing changes..."):
+                    # Package the input data in the correct structure
+                    repo_details = {
+                        "repo_url": repo_url,
+                        "commit_message": commit_message,
+                        "folder_path": folder_path
+                    }
+
+                    credentials = {
+                        "username": st.session_state.github_username,
+                        "token": st.session_state.github_token
+                    }
+                    response = requests.post(f"{FAST_API_URL}/git/commit-and-push/", json={
+                        "repo_details": repo_details,
+                        "credentials": credentials
+                    })
+                    
+                    commit_result = response.json()
+                    if "message" in commit_result:
+                        st.success("Code committed and pushed successfully!")
+                    else:
+                        st.error(f"Unexpected response: {commit_result}")
+        
+            elif output.get("message") == "User does not have GitHub credentials.":
+                st.warning("GitHub credentials not found. Please go to the GitHub page to set up your username and Personal Access Token (PAT) first.")
 
 def run_app_in_thread():
     """Execute the application in a separate thread."""
@@ -106,13 +152,16 @@ def code_generation_interface():
                     # Check if required files exist and add launch button
                     if Path("requirements.txt").exists() and Path("frontend.py").exists():
                         launch_application()
-                    
-                    # Display final content directly in the UI
-                    for stage, content in st.session_state['stage_content'].items():
-                        if content:  # Only show non-empty stages
-                            st.subheader(f"{stage_messages.get(stage, stage)} - Complete ✓")
-                            st.markdown(content)
-                            st.divider()  # Add visual separation between stages
+
+                        generated_app_path = str(Path("generated_app").absolute())
+                        
+                        # Store the app files in session state
+                        try:
+                            # GitHub commit section
+                            commit_to_github(generated_app_path)
+                        except Exception as e:
+                            logger.error(f"Error processing app data: {str(e)}")
+                            st.error(f"Error processing application data: {str(e)}")
                 else:
                     st.error("❌ Failed to build application")
                     

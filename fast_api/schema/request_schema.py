@@ -54,6 +54,7 @@ class GitHubCredentials(BaseModel):
 class RepoDetails(BaseModel):
     repo_url: str
     commit_message: str
+    folder_path: str
 
 # Request model for GitHub credential updates
 class GitHubCredentialsRequest(BaseModel):
