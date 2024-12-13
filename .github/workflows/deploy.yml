@@ -102,10 +102,6 @@ jobs:
             # Pull the Docker image from Docker Hub using the timestamp
             docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
 
-            # Stop and remove any existing container
-            docker stop login-app || true
-            docker rm login-app || true
-
             # Run the new container
             sudo docker run -d -p 8000:8000 -p 8501:8501 "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
           EOF
