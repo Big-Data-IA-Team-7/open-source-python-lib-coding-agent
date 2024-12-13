@@ -52,80 +52,94 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 4: Build Docker image
-      - name: Build the Docker image
+      # # Step 4: Build Docker image
+      # - name: Build the Docker image
+      #   run: |
+      #     docker build -t login-app . || (echo "Docker build failed!" && exit 1)
+
+      # Cache Docker layers to speed up builds
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: ~/.docker
+          key: ${{ runner.os }}-docker-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
+
+      # Build Docker image with caching enabled
+      - name: Build Docker image and push
         run: |
-          docker build -t login-app . || (echo "Docker build failed!" && exit 1)
+          docker buildx build --platform linux/amd64,linux/arm64 -t ${{ secrets.DOCKER_USERNAME }}/login-app:latest --push .
 
-      # Step 5: Tag Docker image with timestamp
-      - name: Tag the Docker image with timestamp
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
-          echo "Generated timestamp: $TIMESTAMP"
-          docker tag login-app:latest "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
-          echo "Docker image tagged as: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+      # # Step 5: Tag Docker image with timestamp
+      # - name: Tag the Docker image with timestamp
+      #   run: |
+      #     TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
+      #     echo "Generated timestamp: $TIMESTAMP"
+      #     docker tag login-app:latest "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+      #     echo "Docker image tagged as: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
-      # Step 6: Push Docker image to Docker Hub
-      - name: Push the Docker image to Docker Hub
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
-          echo "Pushing Docker image: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
-          docker push "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+      # # Step 6: Push Docker image to Docker Hub
+      # - name: Push the Docker image to Docker Hub
+      #   run: |
+      #     TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
+      #     echo "Pushing Docker image: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+      #     docker push "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
-      # Step 7: Deploy to EC2
-      - name: SSH into EC2 and deploy the app
-        env:
-          PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-          SERVER_IP: ${{ secrets.EC2_SERVER_IP }}
-        run: |
-          echo "$PRIVATE_KEY" > cicd.pem
-          chmod 600 cicd.pem
+      # # Step 7: Deploy to EC2
+      # - name: SSH into EC2 and deploy the app
+      #   env:
+      #     PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+      #     SERVER_IP: ${{ secrets.EC2_SERVER_IP }}
+      #   run: |
+      #     echo "$PRIVATE_KEY" > cicd.pem
+      #     chmod 600 cicd.pem
 
-          # Start SSH agent and load the private key
-          eval "$(ssh-agent -s)"
-          ssh-add cicd.pem
+      #     # Start SSH agent and load the private key
+      #     eval "$(ssh-agent -s)"
+      #     ssh-add cicd.pem
 
-          ssh -o StrictHostKeyChecking=no ec2-user@$SERVER_IP << 'EOF'
-            # Install Docker on Amazon Linux 2023 (if not already installed)
-            sudo dnf install -y docker
-            sudo systemctl enable docker
-            sudo systemctl start docker
+      #     ssh -o StrictHostKeyChecking=no ec2-user@$SERVER_IP << 'EOF'
+      #       # Install Docker on Amazon Linux 2023 (if not already installed)
+      #       sudo dnf install -y docker
+      #       sudo systemctl enable docker
+      #       sudo systemctl start docker
 
-            # Add ec2-user to the docker group
-            sudo usermod -aG docker ec2-user
+      #       # Add ec2-user to the docker group
+      #       sudo usermod -aG docker ec2-user
 
-            # Define the timestamp in EC2 as well
-            TIMESTAMP=$(date +%Y%m%d%H)  # Same timestamp format (without seconds)
+      #       # Define the timestamp in EC2 as well
+      #       TIMESTAMP=$(date +%Y%m%d%H)  # Same timestamp format (without seconds)
 
-            echo "Pulling Docker image: $TIMESTAMP"
+      #       echo "Pulling Docker image: $TIMESTAMP"
 
-            # Pull the Docker image from Docker Hub using the timestamp
-            docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+      #       # Pull the Docker image from Docker Hub using the timestamp
+      #       docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
-            # Run the new container
-            sudo docker run -d \
-              -p 8000:8000 -p 8501:8501 \
-              -e ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" \
-              -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-              -e AWS_S3_BUCKET_NAME="${{ secrets.AWS_S3_BUCKET_NAME }}" \
-              -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
-              -e FAST_API_URL="${{ secrets.FAST_API_URL }}" \
-              -e LANGCHAIN_API_KEY="${{ secrets.LANGCHAIN_API_KEY }}" \
-              -e LANGCHAIN_ENDPOINT="${{ secrets.LANGCHAIN_ENDPOINT }}" \
-              -e LANGCHAIN_PROJECT="${{ secrets.LANGCHAIN_PROJECT }}" \
-              -e LANGCHAIN_TRACING_V2="${{ secrets.LANGCHAIN_TRACING_V2 }}" \
-              -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
-              -e PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}" \
-              -e SECRET_KEY="${{ secrets.SECRET_KEY }}" \
-              -e SERPAPI_KEY="${{ secrets.SERPAPI_KEY }}" \
-              -e SNOWFLAKE_ACCOUNT="${{ secrets.SNOWFLAKE_ACCOUNT }}" \
-              -e SNOWFLAKE_DATABASE="${{ secrets.SNOWFLAKE_DATABASE }}" \
-              -e SNOWFLAKE_PASSWORD="${{ secrets.SNOWFLAKE_PASSWORD }}" \
-              -e SNOWFLAKE_ROLE="${{ secrets.SNOWFLAKE_ROLE }}" \
-              -e SNOWFLAKE_SCHEMA="${{ secrets.SNOWFLAKE_SCHEMA }}" \
-              -e SNOWFLAKE_USER="${{ secrets.SNOWFLAKE_USER }}" \
-              -e SNOWFLAKE_WAREHOUSE="${{ secrets.SNOWFLAKE_WAREHOUSE }}" \
-              -e DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
-              -e DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}" \
-              "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
-          EOF
+      #       # Run the new container
+      #       sudo docker run -d \
+      #         -p 8000:8000 -p 8501:8501 \
+      #         -e ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" \
+      #         -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+      #         -e AWS_S3_BUCKET_NAME="${{ secrets.AWS_S3_BUCKET_NAME }}" \
+      #         -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+      #         -e FAST_API_URL="${{ secrets.FAST_API_URL }}" \
+      #         -e LANGCHAIN_API_KEY="${{ secrets.LANGCHAIN_API_KEY }}" \
+      #         -e LANGCHAIN_ENDPOINT="${{ secrets.LANGCHAIN_ENDPOINT }}" \
+      #         -e LANGCHAIN_PROJECT="${{ secrets.LANGCHAIN_PROJECT }}" \
+      #         -e LANGCHAIN_TRACING_V2="${{ secrets.LANGCHAIN_TRACING_V2 }}" \
+      #         -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+      #         -e PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}" \
+      #         -e SECRET_KEY="${{ secrets.SECRET_KEY }}" \
+      #         -e SERPAPI_KEY="${{ secrets.SERPAPI_KEY }}" \
+      #         -e SNOWFLAKE_ACCOUNT="${{ secrets.SNOWFLAKE_ACCOUNT }}" \
+      #         -e SNOWFLAKE_DATABASE="${{ secrets.SNOWFLAKE_DATABASE }}" \
+      #         -e SNOWFLAKE_PASSWORD="${{ secrets.SNOWFLAKE_PASSWORD }}" \
+      #         -e SNOWFLAKE_ROLE="${{ secrets.SNOWFLAKE_ROLE }}" \
+      #         -e SNOWFLAKE_SCHEMA="${{ secrets.SNOWFLAKE_SCHEMA }}" \
+      #         -e SNOWFLAKE_USER="${{ secrets.SNOWFLAKE_USER }}" \
+      #         -e SNOWFLAKE_WAREHOUSE="${{ secrets.SNOWFLAKE_WAREHOUSE }}" \
+      #         -e DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
+      #         -e DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}" \
+      #         "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+      #     EOF
