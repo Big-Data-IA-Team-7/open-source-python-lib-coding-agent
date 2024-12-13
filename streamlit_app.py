@@ -13,7 +13,6 @@ from features.code_generation_page import code_generation_interface
 
 load_dotenv()
 FAST_API_URL = os.getenv("FAST_API_URL")
-
 # Landing page function
 def landing_page():
     st.title("🐍 Python Library Coding Agent")
