@@ -18,65 +18,58 @@ def get_host_ip():
     return 'localhost'
 
 def run_app_in_thread():
-    """Execute the application in a separate thread and update the UI with the URL."""
-    def run():
-        try:
-            logger.info("Starting application launch in thread")
-            success, port = execute_application(
-                "generated_app/requirements.txt",
-                "generated_app/frontend.py"
-            )
+    """Execute the application in a non-threaded manner to maintain session state."""
+    try:
+        logger.info("Starting application launch")
+        success, port = execute_application(
+            "generated_app/requirements.txt",
+            "generated_app/frontend.py"
+        )
+        
+        if success and port:
+            host_ip = get_host_ip()
+            app_url = f"http://{host_ip}:{port}"
+            logger.info(f"Application launched successfully. URL: {app_url}")
+            return True, app_url
+        else:
+            logger.error("Failed to launch application")
+            return False, "Failed to launch application"
             
-            if success and port:
-                host_ip = get_host_ip()
-                app_url = f"http://{host_ip}:{port}"
-                logger.info(f"Application launched successfully. URL: {app_url}")
-                st.session_state['app_url'] = app_url
-                logger.info(f'Session state: {st.session_state['app_url']}')
-                st.rerun()
-            else:
-                logger.error("Failed to launch application")
-                st.session_state['launch_error'] = "Failed to launch application"
-                st.rerun()
-                
-        except Exception as e:
-            logger.error(f"Error in run_app_in_thread: {str(e)}")
-            st.session_state['launch_error'] = str(e)
-            st.rerun()
-    
-    thread = threading.Thread(target=run, daemon=True)
-    thread.start()
+    except Exception as e:
+        logger.error(f"Error in application launch: {str(e)}")
+        return False, str(e)
 
 @st.fragment
 def launch_application():
-    if 'launch_error' in st.session_state:
-        st.error(f"Error launching application: {st.session_state['launch_error']}")
-        if st.button("🔄 Retry Launch"):
-            del st.session_state['launch_error']
-            st.rerun()
-    elif 'app_url' not in st.session_state:
-        st.button("🚀 Launch Application", on_click=run_app_in_thread, type="primary")
-        st.info("Click the button above to start the application")
-    else:
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.success("Application is running! Click the button to open it in a new tab:")
-        with col2:
-            # Using custom HTML to open in new tab
-            st.markdown(f'<a href="{st.session_state["app_url"]}" target="_blank"><button style="background-color:#4CAF50;color:white;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;">🔗 Open App</button></a>', unsafe_allow_html=True)
+    # Initialize placeholders
+    info_placeholder = st.empty()
+    url_placeholder = st.empty()
+    debug_placeholder = st.empty()
+    
+    # Show launch button
+    if st.button("🚀 Launch Application", type="primary"):
+        info_placeholder.info("Starting application...")
+        success, result = run_app_in_thread()
         
-        # Add debugging information
-        with st.expander("Debug Information"):
-            st.code(f"""
+        if success:
+            st.session_state['app_url'] = result
+            info_placeholder.success("Application is running! Click the button below to open it in a new tab:")
+            url_placeholder.markdown(
+                f'<a href="{result}" target="_blank"><button style="background-color:#4CAF50;color:white;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;">🔗 Open App</button></a>',
+                unsafe_allow_html=True
+            )
+            
+            # Add debugging information
+            debug_placeholder.expander("Debug Information").code(f"""
 Host IP: {get_host_ip()}
-App URL: {st.session_state['app_url']}
+App URL: {result}
 In Docker: {os.path.exists('/.dockerenv')}
 Environment Variables: {dict(os.environ)}
             """)
-            
-        if st.button("🔄 Restart Application", type="secondary"):
-            del st.session_state['app_url']
-            st.rerun()
+        else:
+            info_placeholder.error(f"Error launching application: {result}")
+    else:
+        info_placeholder.info("Click the button below to start the application")
 
 @st.fragment
 def commit_to_github(folder_path: str):
