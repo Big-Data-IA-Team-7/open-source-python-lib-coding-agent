@@ -45,70 +45,63 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
-      - name: Checking the environment variables
+      # Step 3: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 5: Build Docker image
+      - name: Build the Docker image
         run: |
-          echo "Checking if environment variables are set on EC2 instance:"
-          echo "FAST_API_URL: \$FAST_API_URL"
-          echo "AWS_ACCESS_KEY_ID: \$AWS_ACCESS_KEY_ID"
-          echo "DOCKER_USERNAME: \$DOCKER_USERNAME"
+          docker build -t login-app . || (echo "Docker build failed!" && exit 1)
 
-      # # Step 3: Log in to Docker Hub
-      # - name: Log in to Docker Hub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKER_USERNAME }}
-      #     password: ${{ secrets.DOCKER_PASSWORD }}
+      # Step 5: Tag Docker image with timestamp
+      - name: Tag the Docker image with timestamp
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
+          echo "Generated timestamp: $TIMESTAMP"
+          docker tag login-app:latest "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+          echo "Docker image tagged as: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
-      # # Step 5: Build Docker image
-      # - name: Build the Docker image
-      #   run: |
-      #     docker build -t login-app . || (echo "Docker build failed!" && exit 1)
+      # Step 6: Push Docker image to Docker Hub
+      - name: Push the Docker image to Docker Hub
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
+          echo "Pushing Docker image: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+          docker push "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
-      # # Step 5: Tag Docker image with timestamp
-      # - name: Tag the Docker image with timestamp
-      #   run: |
-      #     TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
-      #     echo "Generated timestamp: $TIMESTAMP"
-      #     docker tag login-app:latest "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
-      #     echo "Docker image tagged as: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+      # Step 7: Deploy to EC2
+      - name: SSH into EC2 and deploy the app
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+          SERVER_IP: ${{ secrets.EC2_SERVER_IP }}
+        run: |
+          echo "$PRIVATE_KEY" > cicd.pem
+          chmod 600 cicd.pem
 
-      # # Step 6: Push Docker image to Docker Hub
-      # - name: Push the Docker image to Docker Hub
-      #   run: |
-      #     TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
-      #     echo "Pushing Docker image: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
-      #     docker push "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+          # Start SSH agent and load the private key
+          eval "$(ssh-agent -s)"
+          ssh-add cicd.pem
 
-      # # Step 7: Deploy to EC2
-      # - name: SSH into EC2 and deploy the app
-      #   env:
-      #     PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-      #     SERVER_IP: ${{ secrets.EC2_SERVER_IP }}
-      #   run: |
-      #     echo "$PRIVATE_KEY" > cicd.pem
-      #     chmod 600 cicd.pem
+          ssh -o StrictHostKeyChecking=no ec2-user@$SERVER_IP << EOF
+            # Install Docker on Amazon Linux 2023 (if not already installed)
+            sudo dnf install -y docker
+            sudo systemctl enable docker
+            sudo systemctl start docker
 
-      #     # Start SSH agent and load the private key
-      #     eval "$(ssh-agent -s)"
-      #     ssh-add cicd.pem
+            # Add ec2-user to the docker group
+            sudo usermod -aG docker ec2-user
 
-      #     ssh -o StrictHostKeyChecking=no ec2-user@$SERVER_IP << EOF
-      #       # Install Docker on Amazon Linux 2023 (if not already installed)
-      #       sudo dnf install -y docker
-      #       sudo systemctl enable docker
-      #       sudo systemctl start docker
+            # Define the timestamp in EC2 as well
+            TIMESTAMP=\$(date +%Y%m%d%H)  # Same timestamp format (without seconds)
 
-      #       # Add ec2-user to the docker group
-      #       sudo usermod -aG docker ec2-user
+            echo "Pulling Docker image: \$TIMESTAMP"
 
-      #       # Define the timestamp in EC2 as well
-      #       TIMESTAMP=\$(date +%Y%m%d%H)  # Same timestamp format (without seconds)
+            # Pull the Docker image from Docker Hub using the timestamp
+            docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
 
-      #       echo "Pulling Docker image: \$TIMESTAMP"
-
-      #       # Pull the Docker image from Docker Hub using the timestamp
-      #       docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
-
-      #       # Run the new container
-      #       sudo docker run -d -p 8000:8000 -p 8501:8501 "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
-      #     EOF
+            # Run the new container
+            sudo docker run -d -p 8000:8000 -p 8501:8501 "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
+          EOF
