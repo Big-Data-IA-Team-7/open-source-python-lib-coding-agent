@@ -91,14 +91,13 @@ jobs:
           # SSH into the EC2 instance and run deployment commands
           ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP << EOF
 
-            # Add ec2-user to the docker group
-            sudo usermod -aG docker ec2-user
-
-            # echo "Pulling Docker image: $TIMESTAMP"
-
             # Pull the Docker image from Docker Hub using the timestamp
             docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
+            # Stop any running container
+            sudo docker stop login-app || true
+            sudo docker rm login-app || true
+            
             # Run the new container
             sudo docker run -d \
               -p 8000:8000 -p 8501:8501 \
