@@ -1,0 +1,41 @@
+name: Streamlit Login App (Running on the local machine)
+
+on:
+  push:
+    branches:
+      - new
+  pull_request:
+    branches:
+      - new
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      #Step 2: Deploy to EC2
+      - name: SSH into EC2 and deploy the app
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+          SERVER_IP: ${{ secrets.EC2_SERVER_IP }}
+        run: |
+          # Save the private key to a file and set proper permissions
+          echo "$PRIVATE_KEY" > cicd.pem
+          chmod 600 cicd.pem
+
+          # Start SSH agent and add the private key
+          eval "$(ssh-agent -s)"
+          ssh-add cicd.pem
+
+          # SSH into the EC2 instance and run deployment commands
+          ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP << EOF
+            # Install Docker on Ubuntu 24.04
+            docker login
+            sudo apt-get update
+            sudo apt-get install -y docker.io
+            sudo systemctl enable docker
+            sudo systemctl start docker
+          EOF
