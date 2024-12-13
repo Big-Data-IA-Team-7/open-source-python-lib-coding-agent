@@ -54,25 +54,25 @@ jobs:
       #     DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       #     DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 5: Build Docker image
-      - name: Build the Docker image
-        run: |
-          docker build -t login-app . || (echo "Docker build failed!" && exit 1)
+      # # Step 5: Build Docker image
+      # - name: Build the Docker image
+      #   run: |
+      #     docker build -t login-app . || (echo "Docker build failed!" && exit 1)
 
-      # Step 6: Tag Docker image with timestamp
-      - name: Tag the Docker image with timestamp
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
-          echo "Generated timestamp: $TIMESTAMP"
-          docker tag login-app:latest "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
-          echo "Docker image tagged as: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+      # # Step 6: Tag Docker image with timestamp
+      # - name: Tag the Docker image with timestamp
+      #   run: |
+      #     TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
+      #     echo "Generated timestamp: $TIMESTAMP"
+      #     docker tag login-app:latest "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+      #     echo "Docker image tagged as: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
-      # Step 7: Push Docker image to Docker Hub
-      - name: Push the Docker image to Docker Hub
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
-          echo "Pushing Docker image: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
-          docker push "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+      # # Step 7: Push Docker image to Docker Hub
+      # - name: Push the Docker image to Docker Hub
+      #   run: |
+      #     TIMESTAMP=$(date +%Y%m%d%H)  # Remove seconds to avoid mismatch
+      #     echo "Pushing Docker image: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+      #     docker push "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
       # Step 7: Deploy to EC2
       - name: SSH into EC2 and deploy the app
@@ -83,18 +83,22 @@ jobs:
           echo "$PRIVATE_KEY" > cicd.pem
           chmod 600 cicd.pem
 
+          # Change permissions to ensure it's only readable by the owner
+          chmod 400 cicd.pem
+
           # Start SSH agent and load the private key
           eval "$(ssh-agent -s)"
           ssh-add cicd.pem
 
-          ssh -o StrictHostKeyChecking=no ec2-user@$SERVER_IP << EOF
-            # Install Docker on Amazon Linux 2023 (if not already installed)
-            sudo dnf install -y docker
+          ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP << EOF
+            # Update the system and install Docker on Ubuntu 24.04.1
+            sudo apt-get update -y
+            sudo apt-get install -y docker.io
             sudo systemctl enable docker
             sudo systemctl start docker
 
-            # Add ec2-user to the docker group
-            sudo usermod -aG docker ec2-user
+            # Add ubuntu user to the docker group
+            sudo usermod -aG docker ubuntu
 
             # Define the timestamp in EC2 as well
             TIMESTAMP=\$(date +%Y%m%d%H)  # Same timestamp format (without seconds)
