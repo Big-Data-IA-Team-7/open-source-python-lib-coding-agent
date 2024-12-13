@@ -71,7 +71,8 @@ jobs:
       # Build Docker image with caching enabled
       - name: Build Docker image and push
         run: |
-          docker buildx build --platform linux/arm64 -t ${{ secrets.DOCKER_USERNAME }}/login-app:latest --push .
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)  # Unique timestamp format with seconds
+          docker buildx build --platform linux/arm64 -t ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP --push .
 
       # Step 7: Deploy to EC2
       - name: SSH into EC2 and deploy the app
@@ -93,13 +94,10 @@ jobs:
             # Add ec2-user to the docker group
             sudo usermod -aG docker ec2-user
 
-            # Define the timestamp in EC2 as well
-            TIMESTAMP=$(date +%Y%m%d%H)  # Same timestamp format (without seconds)
-
             # echo "Pulling Docker image: $TIMESTAMP"
 
             # Pull the Docker image from Docker Hub using the timestamp
-            docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:latest"
+            docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
             # Run the new container
             sudo docker run -d \
@@ -126,5 +124,5 @@ jobs:
               -e SNOWFLAKE_WAREHOUSE="${{ secrets.SNOWFLAKE_WAREHOUSE }}" \
               -e DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
               -e DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}" \
-              "${{ secrets.DOCKER_USERNAME }}/login-app:latest"
+              "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
           EOF
