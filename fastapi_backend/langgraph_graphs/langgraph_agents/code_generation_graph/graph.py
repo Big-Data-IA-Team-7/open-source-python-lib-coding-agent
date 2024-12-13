@@ -116,11 +116,11 @@ async def build_app(
             context=context
             )
     else:
-        # config = RunnableConfig(
-        #     configurable={
-        #         "response_model": "anthropic/claude-3-5-sonnet-20241022"
-        #     }
-        # )
+        config = RunnableConfig(
+            configurable={
+                "response_model": "anthropic/claude-3-5-sonnet-20241022"
+            }
+        )
         configuration = AgentConfiguration.from_runnable_config(config)
         max_tokens_value = 4096
         model = load_chat_model(configuration.response_model, max_tokens=max_tokens_value).with_structured_output(CodeGenerated)
