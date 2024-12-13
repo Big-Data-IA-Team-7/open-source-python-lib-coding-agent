@@ -103,5 +103,29 @@ jobs:
             docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
 
             # Run the new container
-            sudo docker run -d -p 8000:8000 -p 8501:8501 "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
+            sudo docker run -d \
+  -p 8000:8000 -p 8501:8501 \
+  -e ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" \
+  -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+  -e AWS_S3_BUCKET_NAME="${{ secrets.AWS_S3_BUCKET_NAME }}" \
+  -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+  -e FAST_API_URL="${{ secrets.FAST_API_URL }}" \
+  -e LANGCHAIN_API_KEY="${{ secrets.LANGCHAIN_API_KEY }}" \
+  -e LANGCHAIN_ENDPOINT="${{ secrets.LANGCHAIN_ENDPOINT }}" \
+  -e LANGCHAIN_PROJECT="${{ secrets.LANGCHAIN_PROJECT }}" \
+  -e LANGCHAIN_TRACING_V2="${{ secrets.LANGCHAIN_TRACING_V2 }}" \
+  -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+  -e PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}" \
+  -e SECRET_KEY="${{ secrets.SECRET_KEY }}" \
+  -e SERPAPI_KEY="${{ secrets.SERPAPI_KEY }}" \
+  -e SNOWFLAKE_ACCOUNT="${{ secrets.SNOWFLAKE_ACCOUNT }}" \
+  -e SNOWFLAKE_DATABASE="${{ secrets.SNOWFLAKE_DATABASE }}" \
+  -e SNOWFLAKE_PASSWORD="${{ secrets.SNOWFLAKE_PASSWORD }}" \
+  -e SNOWFLAKE_ROLE="${{ secrets.SNOWFLAKE_ROLE }}" \
+  -e SNOWFLAKE_SCHEMA="${{ secrets.SNOWFLAKE_SCHEMA }}" \
+  -e SNOWFLAKE_USER="${{ secrets.SNOWFLAKE_USER }}" \
+  -e SNOWFLAKE_WAREHOUSE="${{ secrets.SNOWFLAKE_WAREHOUSE }}" \
+  -e DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
+  -e DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}" \
+  "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
           EOF
