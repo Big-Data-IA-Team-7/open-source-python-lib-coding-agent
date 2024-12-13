@@ -52,7 +52,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 5: Build Docker image
+      # Step 4: Build Docker image
       - name: Build the Docker image
         run: |
           docker build -t login-app . || (echo "Docker build failed!" && exit 1)
@@ -85,7 +85,7 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add cicd.pem
 
-          ssh -o StrictHostKeyChecking=no ec2-user@$SERVER_IP << EOF
+          ssh -o StrictHostKeyChecking=no ec2-user@$SERVER_IP << 'EOF'
             # Install Docker on Amazon Linux 2023 (if not already installed)
             sudo dnf install -y docker
             sudo systemctl enable docker
@@ -95,37 +95,37 @@ jobs:
             sudo usermod -aG docker ec2-user
 
             # Define the timestamp in EC2 as well
-            TIMESTAMP=\$(date +%Y%m%d%H)  # Same timestamp format (without seconds)
+            TIMESTAMP=$(date +%Y%m%d%H)  # Same timestamp format (without seconds)
 
-            echo "Pulling Docker image: \$TIMESTAMP"
+            echo "Pulling Docker image: $TIMESTAMP"
 
             # Pull the Docker image from Docker Hub using the timestamp
-            docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
+            docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
             # Run the new container
             sudo docker run -d \
-  -p 8000:8000 -p 8501:8501 \
-  -e ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" \
-  -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-  -e AWS_S3_BUCKET_NAME="${{ secrets.AWS_S3_BUCKET_NAME }}" \
-  -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
-  -e FAST_API_URL="${{ secrets.FAST_API_URL }}" \
-  -e LANGCHAIN_API_KEY="${{ secrets.LANGCHAIN_API_KEY }}" \
-  -e LANGCHAIN_ENDPOINT="${{ secrets.LANGCHAIN_ENDPOINT }}" \
-  -e LANGCHAIN_PROJECT="${{ secrets.LANGCHAIN_PROJECT }}" \
-  -e LANGCHAIN_TRACING_V2="${{ secrets.LANGCHAIN_TRACING_V2 }}" \
-  -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
-  -e PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}" \
-  -e SECRET_KEY="${{ secrets.SECRET_KEY }}" \
-  -e SERPAPI_KEY="${{ secrets.SERPAPI_KEY }}" \
-  -e SNOWFLAKE_ACCOUNT="${{ secrets.SNOWFLAKE_ACCOUNT }}" \
-  -e SNOWFLAKE_DATABASE="${{ secrets.SNOWFLAKE_DATABASE }}" \
-  -e SNOWFLAKE_PASSWORD="${{ secrets.SNOWFLAKE_PASSWORD }}" \
-  -e SNOWFLAKE_ROLE="${{ secrets.SNOWFLAKE_ROLE }}" \
-  -e SNOWFLAKE_SCHEMA="${{ secrets.SNOWFLAKE_SCHEMA }}" \
-  -e SNOWFLAKE_USER="${{ secrets.SNOWFLAKE_USER }}" \
-  -e SNOWFLAKE_WAREHOUSE="${{ secrets.SNOWFLAKE_WAREHOUSE }}" \
-  -e DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
-  -e DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}" \
-  "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
+              -p 8000:8000 -p 8501:8501 \
+              -e ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" \
+              -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+              -e AWS_S3_BUCKET_NAME="${{ secrets.AWS_S3_BUCKET_NAME }}" \
+              -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+              -e FAST_API_URL="${{ secrets.FAST_API_URL }}" \
+              -e LANGCHAIN_API_KEY="${{ secrets.LANGCHAIN_API_KEY }}" \
+              -e LANGCHAIN_ENDPOINT="${{ secrets.LANGCHAIN_ENDPOINT }}" \
+              -e LANGCHAIN_PROJECT="${{ secrets.LANGCHAIN_PROJECT }}" \
+              -e LANGCHAIN_TRACING_V2="${{ secrets.LANGCHAIN_TRACING_V2 }}" \
+              -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+              -e PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}" \
+              -e SECRET_KEY="${{ secrets.SECRET_KEY }}" \
+              -e SERPAPI_KEY="${{ secrets.SERPAPI_KEY }}" \
+              -e SNOWFLAKE_ACCOUNT="${{ secrets.SNOWFLAKE_ACCOUNT }}" \
+              -e SNOWFLAKE_DATABASE="${{ secrets.SNOWFLAKE_DATABASE }}" \
+              -e SNOWFLAKE_PASSWORD="${{ secrets.SNOWFLAKE_PASSWORD }}" \
+              -e SNOWFLAKE_ROLE="${{ secrets.SNOWFLAKE_ROLE }}" \
+              -e SNOWFLAKE_SCHEMA="${{ secrets.SNOWFLAKE_SCHEMA }}" \
+              -e SNOWFLAKE_USER="${{ secrets.SNOWFLAKE_USER }}" \
+              -e SNOWFLAKE_WAREHOUSE="${{ secrets.SNOWFLAKE_WAREHOUSE }}" \
+              -e DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
+              -e DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}" \
+              "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
           EOF
