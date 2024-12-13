@@ -15,7 +15,7 @@ FAST_API_URL = os.getenv("FAST_API_URL")
 def get_host_ip():
     """Get the host IP address that should be used for accessing the app."""
     # In Docker, we want to use localhost since we're exposing the ports
-    return 'localhost'
+    return 'http://75.101.133.31/'
 
 def run_app_in_thread():
     """Execute the application in a non-threaded manner to maintain session state."""
@@ -63,8 +63,6 @@ def launch_application():
             debug_placeholder.expander("Debug Information").code(f"""
 Host IP: {get_host_ip()}
 App URL: {result}
-In Docker: {os.path.exists('/.dockerenv')}
-Environment Variables: {dict(os.environ)}
             """)
         else:
             info_placeholder.error(f"Error launching application: {result}")
