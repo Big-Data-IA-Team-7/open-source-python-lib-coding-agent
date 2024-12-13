@@ -2,7 +2,7 @@ import streamlit as st
 import traceback
 from utils.api_helpers import stream_error_handling
 import time 
-from langgraph_graphs.langgraph_agents.utils import web_search, extract_domain
+from fastapi_backend.langgraph_graphs.langgraph_agents.utils import web_search, extract_domain
 import logging
 
 def error_handling_interface():

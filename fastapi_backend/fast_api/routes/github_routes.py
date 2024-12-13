@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from git import Repo
 import os
-from fast_api.schema.request_schema import GitHubCredentials, RepoDetails, GitHubCredentialsRequest
-from fast_api.services.github_service import validate_github_credentials,commit_and_push_changes,copy_files_to_repo
-from fast_api.config.db_connection import snowflake_connection
+from fastapi_backend.fast_api.schema.request_schema import GitHubCredentials, RepoDetails, GitHubCredentialsRequest
+from fastapi_backend.fast_api.services.github_service import validate_github_credentials,commit_and_push_changes,copy_files_to_repo
+from fastapi_backend.fast_api.config.db_connection import snowflake_connection
 import logging
 import shutil
 

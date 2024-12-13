@@ -8,7 +8,7 @@ from typing import Annotated
 
 from langchain_core.documents import Document
 
-from langgraph_graphs.langgraph_agents.utils import reduce_docs, reduce_codes
+from fastapi_backend.langgraph_graphs.langgraph_agents.utils import reduce_docs, reduce_codes
 
 @dataclass(kw_only=True)
 class QueryState:

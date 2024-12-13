@@ -3,7 +3,7 @@ from typing import Annotated, List
 from langchain_core.documents import Document
 from langchain_core.messages import AnyMessage
 from langgraph.graph import add_messages
-from langgraph_graphs.langgraph_agents.utils import reduce_docs, reduce_codes
+from fastapi_backend.langgraph_graphs.langgraph_agents.utils import reduce_docs, reduce_codes
 
 @dataclass(kw_only=True)
 class InputState:

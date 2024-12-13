@@ -4,7 +4,7 @@ import pandas as pd
 from typing import Optional, Dict, Any
 import logging
 
-from fast_api.config.db_connection import snowflake_connection, close_connection
+from fastapi_backend.fast_api.config.db_connection import snowflake_connection, close_connection
 
 logger = logging.getLogger(__name__)
 

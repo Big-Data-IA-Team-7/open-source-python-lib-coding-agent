@@ -9,8 +9,8 @@ from langchain_core.runnables import RunnableConfig
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 
-from langgraph_graphs.langgraph_agents.configuration import BaseConfiguration
-from langgraph_graphs.constants import LANGGRAPH_DOCS_INDEX_NAME, LANGCHAIN_DOCS_INDEX_NAME, LLAMAINDEX_DOCS_INDEX_NAME
+from fastapi_backend.langgraph_graphs.langgraph_agents.configuration import BaseConfiguration
+from fastapi_backend.langgraph_graphs.constants import LANGGRAPH_DOCS_INDEX_NAME, LANGCHAIN_DOCS_INDEX_NAME, LLAMAINDEX_DOCS_INDEX_NAME
 
 logger = logging.getLogger(__name__)
 
