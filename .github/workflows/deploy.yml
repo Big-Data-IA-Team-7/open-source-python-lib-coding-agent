@@ -1,4 +1,4 @@
-name: Open Source Python Lib Coding-Agent Deploy
+name: Open Source Python Lib Coding Agent Deploy
 
 on:
   push:
