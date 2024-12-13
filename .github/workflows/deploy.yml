@@ -92,6 +92,7 @@ jobs:
             # Pull the Docker image from Docker Hub using the timestamp
             docker pull "${{ secrets.DOCKER_USERNAME }}/open-source-python:latest"
 
+            
             # Stop the existing container
             docker ps -a --filter "ancestor=ramkumarrp16077/open-source-python:latest" -q | xargs -r docker stop
 
