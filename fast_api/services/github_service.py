@@ -26,40 +26,51 @@ def validate_github_credentials(username: str, token: str) -> str:
     except Exception as e:
         return f"An error occurred during validation: {e}"
 
-# Function to commit and push code to GitHub using token and username
-def commit_and_push(repo_path: str, commit_message: str, username: str, token: str, repo_owner: str, file_name: str, code_content: str = None) -> str:
+def commit_and_push_changes(repo_path: str, repo_url: str, commit_message: str, token: str):
+    """
+    Commit and push the changes to GitHub repository.
+    """
     try:
-        # Initialize the repository
+        # Commit the changes to the local repository
         repo = Repo(repo_path)
+        repo.git.add(A=True)  # Stage all changes
+        repo.index.commit(commit_message)  # Commit changes with the provided message
 
-        # If code_content is provided, write the content to the specified file
-        if code_content and file_name:
-            with open(os.path.join(repo_path, file_name), "w") as f:
-                f.write(code_content)
-        
-        # Stage the specific file (if provided) or all changes
-        if file_name:
-            repo.git.add(file_name)
-        else:
-            repo.git.add(A=True)
+        # Push the changes to the GitHub repository (use token for authentication)
+        origin = repo.remotes.origin
+        origin.set_url(repo_url.replace("https://", f"https://{token}:x-oauth-basic@"))  # Set the remote URL with token
+        origin.push()
 
-        # Commit changes
-        repo.index.commit(commit_message)
+        # Return a success message if commit and push were successful
+        return {"message": "Files successfully committed and pushed to GitHub."}
 
-        # Correct the remote URL with the actual GitHub repository owner
-        remote_url = f"https://{username}:{token}@github.com/{repo_owner}/{repo_path.split('/')[-1]}.git"
-
-        # Set the remote URL for the repository
-        repo.remotes.origin.set_url(remote_url)
-
-        # Push to remote repository
-        result = subprocess.run(['git', 'push'], cwd=repo_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        if result.returncode == 0:
-            # If push is successful, delete the local files
-            shutil.rmtree(repo_path)
-            return "Changes committed and pushed successfully! Local repository has been deleted."
-        else:
-            return f"An error occurred while pushing: {result.stderr.decode()}"
     except Exception as e:
-        return f"An error occurred during commit and push: {e}"
+        # Log or print the error and raise a generic exception with a message
+        return {"error": f"Error committing and pushing files: {str(e)}"}
+
+def copy_files_to_repo(folder_path: str, repo_path: str):
+    """
+    Copy files from the specified folder to the cloned repo, maintaining the directory structure.
+    """
+    try:
+        # Traverse the source folder and replicate the structure in the destination
+        for root, dirs, files in os.walk(folder_path):
+            # Compute the relative path of the current directory from the source folder
+            relative_dir = os.path.relpath(root, folder_path)
+            dest_dir = os.path.join(repo_path, relative_dir)
+
+            # Create the destination directory if it doesn't exist
+            if not os.path.exists(dest_dir):
+                os.makedirs(dest_dir)
+
+            # Copy each file in the current directory to the destination directory
+            for file_name in files:
+                src_file = os.path.join(root, file_name)
+                dest_file = os.path.join(dest_dir, file_name)
+                shutil.copy2(src_file, dest_file)  # copy2 to preserve metadata
+
+        return {"message": "Files and folders successfully copied to the repository."}
+    
+    except Exception as e:
+        print(f"Error copying files and folders: {str(e)}")
+        return {"error": f"Error copying files and folders: {str(e)}"}

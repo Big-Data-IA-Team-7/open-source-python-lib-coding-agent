@@ -12,42 +12,6 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Function to display Streamlit UI for GitHub authentication and repository management
 def github_repo_management():
-    #Dummy LLM (We will remove this part with actual code generation)
-    PROMPT = "Create a Streamlit app for user login with fields for username and password, and a login button."
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": PROMPT}
-            ],
-            max_tokens=300,
-            temperature=0.7,
-        )
-        # Check if 'choices' is in the response and has content
-        if "choices" in response and len(response['choices']) > 0:
-            generated_text = response.choices[0].message['content'].strip()
-
-            # Extract the Python code block (ignoring any instructions)
-            if "```python" in generated_text and "```" in generated_text:
-                # Find the code block
-                start_index = generated_text.find("```python") + len("```python")
-                end_index = generated_text.find("```", start_index)
-                code_content = generated_text[start_index:end_index].strip()
-
-                # Assign the file name (you can set any name or infer from the prompt)
-                file_name = "login_app.py"
-
-                # Save the file name and code content in the session state
-                st.session_state.file_name = file_name
-                st.session_state.code_content = code_content
-            else:
-                st.error("No Python code found in the response.")
-        else:
-            st.error("Unexpected response format from OpenAI API.")
-    except Exception as e:
-        st.error(f"Error generating code: {e}")
-
     #From here the github start
     st.title("GitHub Authentication and Repository Management")
     st.subheader("Repository Details")
@@ -60,8 +24,6 @@ def github_repo_management():
             repo_details = {
                 "repo_url": repo_url,
                 "commit_message": commit_message,
-                "file_name": file_name,
-                "code_content": code_content
             }
 
             credentials = {

@@ -2,9 +2,10 @@ from fastapi import APIRouter, HTTPException
 from git import Repo
 import os
 from fast_api.schema.request_schema import GitHubCredentials, RepoDetails, GitHubCredentialsRequest
-from fast_api.services.github_service import validate_github_credentials, commit_and_push
+from fast_api.services.github_service import validate_github_credentials,commit_and_push_changes,copy_files_to_repo
 from fast_api.config.db_connection import snowflake_connection
 import logging
+import shutil
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -111,12 +112,24 @@ def commit_and_push_to_github(repo_details: RepoDetails, credentials: GitHubCred
     folder_path = repo_details.folder_path
 
     # Clone the repository if it doesn't exist locally
+    repo_name = repo_url.split('/')[-1].replace('.git', '')
+    repo_path = os.path.join(os.getcwd(), repo_name)
+
     if not os.path.exists(repo_path):
         try:
-            repo = Repo.clone_from(repo_details.repo_url, repo_path, env={"GIT_ASKPASS": "echo", "GIT_USERNAME": credentials.username, "GIT_PASSWORD": credentials.token})
+            # Modify the repo_url to include the token for authentication
+            auth_repo_url = repo_url.replace("https://", f"https://{token}:x-oauth-basic@")
+            repo = Repo.clone_from(auth_repo_url, repo_path)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Error cloning repository: {e}")
-    
-    # Call the commit and push function
-    result = commit_and_push(repo_path, repo_details.commit_message, credentials.username, credentials.token, repo_owner, repo_details.file_name, repo_details.code_content)
-    return {"message": result}
+
+    # Copy files to the cloned repo
+    copy_files_to_repo(folder_path, repo_path)
+
+    # Commit and push the changes
+    commit_and_push_changes(repo_path, repo_url, commit_message, token)
+
+    # Clean up (remove the local repo folder after push)
+    shutil.rmtree(repo_path)
+
+    return {"message": "Files successfully uploaded and committed to GitHub."}

@@ -62,11 +62,11 @@ class GitHubCredentialsRequest(BaseModel):
     github_username: str
     git_token: str
     
-class RepoRequest(BaseModel):
-    repo_url: str
-    file_name: str
-    code_content: str
-    commit_message: str
+# class RepoRequest(BaseModel):
+#     repo_url: str
+#     file_name: str
+#     code_content: str
+#     commit_message: str
 
 class AppBuildRequest(BaseModel):
     query: str
