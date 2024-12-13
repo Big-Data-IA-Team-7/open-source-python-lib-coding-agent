@@ -57,7 +57,7 @@ jobs:
       # Step 5: Build Docker image
       - name: Build the Docker image
         run: |
-          docker build -t login-app . || (echo "Docker build failed!" && exit 1)
+          docker buildx build --platform linux/amd64,linux/arm64 -t login-app --push .
 
       # Step 6: Tag Docker image with timestamp
       - name: Tag the Docker image with timestamp
@@ -108,10 +108,7 @@ jobs:
             # Pull the Docker image from Docker Hub using the timestamp
             docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
 
-            # Stop and remove any existing container
-            docker stop login-app || true
-            docker rm login-app || true
-
             # Run the new container
             docker run -d --name login-app -p 8501:8501 "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
+            
           EOF
