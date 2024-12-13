@@ -57,7 +57,7 @@ jobs:
       # Step 5: Build Docker image
       - name: Build the Docker image
         run: |
-          docker buildx build --platform linux/amd64,linux/arm64 -t login-app --push .
+          docker buildx build --platform linux/arm64 -t login-app .
 
       # Step 6: Tag Docker image with timestamp
       - name: Tag the Docker image with timestamp
