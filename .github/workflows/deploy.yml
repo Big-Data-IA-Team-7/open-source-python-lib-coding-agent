@@ -46,8 +46,8 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       # Step 3: checking the env variables
-      - name: checking the env variables
-        uses: echo "${{ secrets.FAST_API_URL }}"
+      - name: Checking the environment variables
+        run: echo "FAST_API_URL is ${{ secrets.FAST_API_URL }}"
 
       # # Step 3: Log in to Docker Hub
       # - name: Log in to Docker Hub
