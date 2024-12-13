@@ -16,11 +16,11 @@ from langgraph.constants import Send
 from langgraph.graph import END, START, StateGraph
 from langchain_community.utilities import SQLDatabase
 
-from langgraph_graphs import retrieval
-from langgraph_graphs.langgraph_agents.code_retrieval_graph.configuration import AgentConfiguration
-from langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph.state import QueryState, ResearcherState, SqlState
-from langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph import configuration
-from langgraph_graphs.langgraph_agents.utils import load_chat_model, replace_s3_locations_with_content, remove_code_file_placeholders, format_docs
+from fastapi_backend.langgraph_graphs import retrieval
+from fastapi_backend.langgraph_graphs.langgraph_agents.code_retrieval_graph.configuration import AgentConfiguration
+from fastapi_backend.langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph.state import QueryState, ResearcherState, SqlState
+from fastapi_backend.langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph import configuration
+from fastapi_backend.langgraph_graphs.langgraph_agents.utils import load_chat_model, replace_s3_locations_with_content, remove_code_file_placeholders, format_docs
 
 logger = logging.getLogger(__name__)
 

@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException, status
 import logging
 import traceback
 
-from fast_api.schema.request_schema import LoginRequest, UserRegister
-from fast_api.services.auth_service import password_hashing, create_jwt_token
-from fast_api.services.user_service import fetch_user, insert_user, fetch_user_by_email
+from fastapi_backend.fast_api.schema.request_schema import LoginRequest, UserRegister
+from fastapi_backend.fast_api.services.auth_service import password_hashing, create_jwt_token
+from fastapi_backend.fast_api.services.user_service import fetch_user, insert_user, fetch_user_by_email
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

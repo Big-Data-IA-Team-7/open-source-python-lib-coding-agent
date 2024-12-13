@@ -3,12 +3,12 @@ import logging
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import StreamingResponse
 
-from fast_api.services.auth_service import get_current_user
-from fast_api.schema.request_schema import HowToRequest, ErrorRequest, AppBuildRequest
+from fastapi_backend.fast_api.services.auth_service import get_current_user
+from fastapi_backend.fast_api.schema.request_schema import HowToRequest, ErrorRequest, AppBuildRequest
 
-from langgraph_graphs.langgraph_agents.error_handling_graph.graph import graph as eh_graph
-from langgraph_graphs.langgraph_agents.code_retrieval_graph.graph import graph as htg_graph
-from langgraph_graphs.langgraph_agents.code_generation_graph.graph import graph as cg_graph
+from fastapi_backend.langgraph_graphs.langgraph_agents.error_handling_graph.graph import graph as eh_graph
+from fastapi_backend.langgraph_graphs.langgraph_agents.code_retrieval_graph.graph import graph as htg_graph
+from fastapi_backend.langgraph_graphs.langgraph_agents.code_generation_graph.graph import graph as cg_graph
 
 logger = logging.getLogger(__name__)
 

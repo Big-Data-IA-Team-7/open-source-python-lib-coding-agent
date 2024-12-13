@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 load_dotenv()
-from fast_api.services.user_service import fetch_user
+from fastapi_backend.fast_api.services.user_service import fetch_user
 
 logger = logging.getLogger(__name__)
 

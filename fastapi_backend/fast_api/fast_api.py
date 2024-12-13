@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
 
-from fast_api.routes import user_routes, agent_routes,github_routes
+from fastapi_backend.fast_api.routes import user_routes, agent_routes,github_routes
 
 from logging_module.logging_config import setup_logging
 

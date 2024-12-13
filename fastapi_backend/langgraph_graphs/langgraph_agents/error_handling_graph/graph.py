@@ -3,10 +3,10 @@ from typing import Any
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import START, StateGraph, END
 
-from langgraph_graphs.langgraph_agents.utils import load_chat_model, format_docs_code, web_search, scrape_url
-from langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph.graph import graph as researcher_graph
-from langgraph_graphs.langgraph_agents.error_handling_graph.state import AgentState, InputState
-from langgraph_graphs.langgraph_agents.code_retrieval_graph.configuration import AgentConfiguration
+from fastapi_backend.langgraph_graphs.langgraph_agents.utils import load_chat_model, format_docs_code, web_search, scrape_url
+from fastapi_backend.langgraph_graphs.langgraph_agents.code_retrieval_graph.researcher_graph.graph import graph as researcher_graph
+from fastapi_backend.langgraph_graphs.langgraph_agents.error_handling_graph.state import AgentState, InputState
+from fastapi_backend.langgraph_graphs.langgraph_agents.code_retrieval_graph.configuration import AgentConfiguration
 
 async def conduct_web_search(state: AgentState) -> dict[str, Any]:
     """Perform web search to find relevant information about the error.
