@@ -105,11 +105,6 @@ async def build_app(
         backend: str
 
     if state.code_evaluated:
-        # config = RunnableConfig(
-        #     configurable={
-        #         "response_model": "anthropic/claude-3-5-sonnet-20241022"
-        #     }
-        # )
         configuration = AgentConfiguration.from_runnable_config(config)
         model = load_chat_model(configuration.query_model).with_structured_output(CodeGenerated)
         top_k = 20
