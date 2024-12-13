@@ -3,10 +3,10 @@ name: Open Source Python Lib Coding Agent Deploy
 on:
   push:
     branches:
-      - deployment
+      - main
   pull_request:
     branches:
-      - deployment
+      - main
 
 jobs:
   build-and-deploy:
