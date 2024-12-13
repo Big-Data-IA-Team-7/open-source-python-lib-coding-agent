@@ -12,6 +12,30 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      FAST_API_URL: ${{ secrets.FAST_API_URL }}
+      LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
+      LANGCHAIN_ENDPOINT: ${{ secrets.LANGCHAIN_ENDPOINT }}
+      LANGCHAIN_PROJECT: ${{ secrets.LANGCHAIN_PROJECT }}
+      LANGCHAIN_TRACING_V2: ${{ secrets.LANGCHAIN_TRACING_V2 }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+      SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
     steps:
       # Step 1: Checkout code
       - name: Checkout code
@@ -28,36 +52,10 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # # Step 4: Extract all environment variables (No `run` required, these are just env settings)
-      # - name: Extracting all the env variables
-      #   env:
-      #     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     FAST_API_URL: ${{ secrets.FAST_API_URL }}
-      #     LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
-      #     LANGCHAIN_ENDPOINT: ${{ secrets.LANGCHAIN_ENDPOINT }}
-      #     LANGCHAIN_PROJECT: ${{ secrets.LANGCHAIN_PROJECT }}
-      #     LANGCHAIN_TRACING_V2: ${{ secrets.LANGCHAIN_TRACING_V2 }}
-      #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      #     PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
-      #     SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      #     SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-      #     SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-      #     SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
-      #     SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
-      #     SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-      #     SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
-      #     SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-      #     SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-      #     DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      #     DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
       # Step 5: Build Docker image
       - name: Build the Docker image
         run: |
-          docker buildx build --platform linux/arm64 -t login-app .
+          docker buildx build --platform linux/arm64 -t login-app . || (echo "Docker build failed!" && exit 1)
 
       # Step 6: Tag Docker image with timestamp
       - name: Tag the Docker image with timestamp
@@ -74,7 +72,7 @@ jobs:
           echo "Pushing Docker image: ${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
           docker push "${{ secrets.DOCKER_USERNAME }}/login-app:$TIMESTAMP"
 
-      # Step 7: Deploy to EC2
+      # Step 8: Deploy to EC2
       - name: SSH into EC2 and deploy the app
         env:
           PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
@@ -108,7 +106,6 @@ jobs:
             # Pull the Docker image from Docker Hub using the timestamp
             docker pull "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
 
-            # Run the new container
-            docker run -d --name login-app -p 8501:8501 "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
-            
+            # Run the new container (using timestamp for unique container name)
+            docker run -d --name login-app-\$TIMESTAMP -p 8501:8501 "${{ secrets.DOCKER_USERNAME }}/login-app:\$TIMESTAMP"
           EOF
