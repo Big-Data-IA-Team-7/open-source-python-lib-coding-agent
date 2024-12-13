@@ -4,12 +4,16 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'README.md'  # Ignore updates to README.md
   pull_request:
     branches:
       - main
 
 jobs:
   build-and-deploy:
+    # Skip the workflow if the source branch is `readme-update`
+    if: ${{ !contains(github.head_ref || github.ref_name, 'readme-update') }}
     runs-on: ubuntu-latest
 
     env:
@@ -94,11 +98,16 @@ jobs:
 
             
             # Stop the existing container
-            docker ps -a --filter "ancestor=ramkumarrp16077/open-source-python:latest" -q | xargs -r docker stop
+            docker ps -a --filter "ancestor=${{ secrets.DOCKER_USERNAME }}/open-source-python:latest" -q | xargs -r docker stop
 
             # Run the new container
             sudo docker run -d \
               -p 8000:8000 -p 8501:8501 \
+              -p 8502:8502 -p 8503:8503 \
+              -p 8504:8504 -p 8505:8505 \
+              -p 8506:8506 -p 8507:8507 \
+              -p 8508:8508 -p 8509:8509 \
+              -p 8510:8510  \
               -e ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" \
               -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
               -e AWS_S3_BUCKET_NAME="${{ secrets.AWS_S3_BUCKET_NAME }}" \
