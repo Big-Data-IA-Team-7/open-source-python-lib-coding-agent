@@ -9,8 +9,8 @@ def error_handling_interface():
     logger = logging.getLogger(__name__)
     try:
         # Error handling for session state initialization
-        if 'history' not in st.session_state:
-            st.session_state['history'] = []
+        if 'ehistory' not in st.session_state:
+            st.session_state['ehistory'] = []
         if 'error_handler_response' not in st.session_state:
             st.session_state['error_handler_response'] = None
         if 'feedback_given' not in st.session_state:
@@ -57,13 +57,13 @@ def error_handling_interface():
 
         # Display chat history
         try:
-            for message in st.session_state['history']:
+            for message in st.session_state['ehistory']:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
         except Exception as history_error:
             logger.warning("Error displaying chat history. The history may be reset.")
             st.warning("Error displaying chat history. The history may be reset.")
-            st.session_state['history'] = []
+            st.session_state['ehistory'] = []
 
         # Handle form submission
         if submit and (task.strip() or code.strip() or error_message.strip()):
@@ -116,11 +116,11 @@ def error_handling_interface():
                     message_placeholder = st.empty()
                     try:
                         # Get the response
-                        full_response = stream_error_handling(task, code, error_message, st.session_state['history'])
+                        full_response = stream_error_handling(task, code, error_message, st.session_state['ehistory'])
                         
                         if full_response:
                             st.session_state['error_handler_response'] = full_response
-                            st.session_state['history'].append({
+                            st.session_state['ehistory'].append({
                                 "role": "assistant", 
                                 "content": full_response
                             })
@@ -129,7 +129,7 @@ def error_handling_interface():
                             error_message = "Sorry, I couldn't analyze the error. Please try again."
                             message_placeholder.markdown(error_message)
                             st.session_state['error_handler_response'] = error_message
-                            st.session_state['history'].append({
+                            st.session_state['ehistory'].append({
                                 "role": "assistant", 
                                 "content": error_message
                             })
@@ -173,7 +173,7 @@ def error_handling_interface():
 
         # Clear chat button
         if st.button("Clear Chat"):
-            st.session_state['history'] = []
+            st.session_state['ehistory'] = []
             st.session_state['error_handler_response'] = None
             st.session_state['feedback_given'] = False
             st.rerun()
