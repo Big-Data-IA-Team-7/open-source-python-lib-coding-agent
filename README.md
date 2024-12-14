@@ -258,7 +258,7 @@ The contributions from the team members are detailed below:
 | Name                         | Contribution                                                                                  |
 |------------------------------|----------------------------------------------------------------------------------------------|
 | **Pragnesh Anekal**          | 33% - Github Data Parsing, Front end Streamlit, FastAPI, Langgraph Setup, Code Retreival Agent, Code Generation Agent |
-| **Ram Kumar Ramasamy Pandiaraj** | 33% - Scraping Documentation, Airflow, Setting up snowflake, Code Generation Agent, Github POC, Tavilly POC, Deployment              |
+| **Ram Kumar Ramasamy Pandiaraj** | 33% - Scraping Documentation, Airflow, Setting up snowflake, Code Generation Agent, Github POC, Tavilly POC, Deployment , Dockerization             |
 | **Dipen Manoj Patel**        | 33% - Streamlit Frontend, Web Search Agent using SerpAPI,  Github MD Parsing, GitHub Push, CI/CD Pipelines   |
 
 ---
