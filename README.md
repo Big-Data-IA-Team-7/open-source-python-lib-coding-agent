@@ -10,7 +10,7 @@ This project simplifies the multi-step process of working with Python libraries 
 - **Google Codelab**: [Codelab Link](https://codelabs-preview.appspot.com/?file_id=1cqfyDQM7pk3ZdG-ojvqj4_wscrx7qn1oA3dZL50mL0I#0)
 - **Streamlit App** (Deployed on AWS EC2): [Streamlit Link](http://75.101.133.31:8501/)
 - **Airflow** (Deployed on AWS EC2): [Airflow Link](http://75.101.133.31:8080/)
-- **YouTube Demo**: [Demo Link]()
+- **YouTube Demo**: [Demo Link](https://www.youtube.com/watch?v=mSMXuX_7uGw)
 
 ---
 
@@ -38,6 +38,11 @@ Unlock powerful capabilities that streamline your development process with intel
 ![Claude](https://img.shields.io/badge/Claude-000000?style=for-the-badge&logo=anthropic&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 
+# Architecture Diagram
+
+<img width="930" alt="image" src="https://github.com/user-attachments/assets/8adb1723-382d-4472-8791-bc1fe8a5b775" />
+
+<img width="664" alt="image" src="https://github.com/user-attachments/assets/ca5fb700-3294-461e-8df1-3157b6797fc1" />
 
 
 ## Proposal and Documentation  
