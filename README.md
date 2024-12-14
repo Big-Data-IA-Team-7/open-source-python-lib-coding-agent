@@ -133,87 +133,49 @@ The following is the structure of the repository:
 │   └── requirements.txt
 ├── fastapi_backend
 │   ├── fast_api
-│   │   ├── __pycache__
-│   │   │   └── fast_api.cpython-312.pyc
 │   │   ├── config
-│   │   │   ├── __pycache__
-│   │   │   │   └── db_connection.cpython-312.pyc
 │   │   │   └── db_connection.py
 │   │   ├── fast_api.py
 │   │   ├── routes
-│   │   │   ├── __pycache__
-│   │   │   │   ├── agent_routes.cpython-312.pyc
-│   │   │   │   └── user_routes.cpython-312.pyc
 │   │   │   ├── agent_routes.py
 │   │   │   ├── github_routes.py
 │   │   │   └── user_routes.py
 │   │   ├── schema
-│   │   │   ├── __pycache__
-│   │   │   │   └── request_schema.cpython-312.pyc
 │   │   │   └── request_schema.py
 │   │   └── services
-│   │       ├── __pycache__
-│   │       │   ├── auth_service.cpython-312.pyc
-│   │       │   └── user_service.cpython-312.pyc
 │   │       ├── auth_service.py
 │   │       ├── github_service.py
 │   │       └── user_service.py
 │   └── langgraph_graphs
-│       ├── __pycache__
-│       │   ├── constants.cpython-312.pyc
-│       │   └── retrieval.cpython-312.pyc
 │       ├── constants.py
 │       ├── langgraph_agents
-│       │   ├── __pycache__
-│       │   │   ├── configuration.cpython-312.pyc
-│       │   │   └── utils.cpython-312.pyc
 │       │   ├── code_generation_graph
 │       │   │   ├── __init__.py
-│       │   │   ├── __pycache__
-│       │   │   │   ├── __init__.cpython-312.pyc
-│       │   │   │   ├── graph.cpython-312.pyc
-│       │   │   │   └── state.cpython-312.pyc
 │       │   │   ├── graph.py
 │       │   │   └── state.py
 │       │   ├── code_retrieval_graph
-│       │   │   ├── __pycache__
-│       │   │   │   ├── configuration.cpython-312.pyc
-│       │   │   │   └── prompts.cpython-312.pyc
 │       │   │   ├── configuration.py
 │       │   │   ├── graph.py
 │       │   │   ├── prompts.py
 │       │   │   ├── researcher_graph
 │       │   │   │   ├── __init__.py
-│       │   │   │   ├── __pycache__
-│       │   │   │   │   ├── __init__.cpython-312.pyc
-│       │   │   │   │   ├── configuration.cpython-312.pyc
-│       │   │   │   │   ├── graph.cpython-312.pyc
-│       │   │   │   │   └── state.cpython-312.pyc
 │       │   │   │   ├── configuration.py
 │       │   │   │   ├── graph.py
 │       │   │   │   └── state.py
 │       │   │   └── state.py
 │       │   ├── configuration.py
 │       │   ├── error_handling_graph
-│       │   │   ├── __pycache__
-│       │   │   │   ├── graph.cpython-312.pyc
-│       │   │   │   └── state.cpython-312.pyc
 │       │   │   ├── graph.py
 │       │   │   └── state.py
 │       │   └── utils.py
 │       └── retrieval.py
 ├── logging_module
 │   ├── __init__.py
-│   ├── __pycache__
-│   │   ├── __init__.cpython-312.pyc
-│   │   └── logging_config.cpython-312.pyc
 │   └── logging_config.py
 ├── poetry.lock
 ├── pyproject.toml
 ├── repo_structure.txt
 └── streamlit_frontend
-    ├── __pycache__
-    │   └── streamlit_app.cpython-312.pyc
     ├── auth
     │   ├── Login.py
     │   ├── Logout.py
