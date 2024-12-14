@@ -43,6 +43,7 @@ Unlock powerful capabilities that streamline your development process with intel
 ## Proposal and Documentation  
 For detailed information about the project's scope, objectives, and architecture, refer to the project proposal on **Google Codelab**: [Project Proposal Link](https://codelabs-preview.appspot.com/?file_id=1cqfyDQM7pk3ZdG-ojvqj4_wscrx7qn1oA3dZL50mL0I#0)
 
+
 ## User Flow
 
 ```mermaid
@@ -87,6 +88,150 @@ flowchart TD
 ```
 
 
+
+## Repository Structure
+
+The following is the structure of the repository:
+```
+.
+├── Dockerfile
+├── README.md
+├── airflow
+│   ├── Dockerfile
+│   ├── __init__.py
+│   ├── dags
+│   │   ├── data_load
+│   │   │   ├── configuration
+│   │   │   │   └── parameter_config.py
+│   │   │   ├── process_documentation_pages
+│   │   │   │   ├── load_into_pinecone.py
+│   │   │   │   ├── process_docs.py
+│   │   │   │   ├── scrape_url.py
+│   │   │   │   └── utils
+│   │   │   │       └── helper_functions.py
+│   │   │   └── process_github_repo
+│   │   │       ├── extract_code.py
+│   │   │       ├── load_ipynb_details_to_snowflake.py
+│   │   │       ├── load_md_details_to_snowflake.py
+│   │   │       ├── load_py_details_to_snowflake.py
+│   │   │       ├── process_ipynb_file.py
+│   │   │       ├── process_md_file.py
+│   │   │       ├── process_py_file.py
+│   │   │       ├── processors
+│   │   │       │   ├── markdown_processor.py
+│   │   │       │   ├── notebook_processor.py
+│   │   │       │   └── python_processor.py
+│   │   │       ├── repo_clone.py
+│   │   │       └── snowflake_loaders
+│   │   │           ├── db_connection.py
+│   │   │           └── snowflake_data_loader.py
+│   │   ├── pipeline_dag_load_documentation.py
+│   │   └── pipeline_dag_load_github_repo.py
+│   ├── entrypoint.sh
+│   ├── poetry.lock
+│   ├── pyproject.toml
+│   └── requirements.txt
+├── fastapi_backend
+│   ├── fast_api
+│   │   ├── __pycache__
+│   │   │   └── fast_api.cpython-312.pyc
+│   │   ├── config
+│   │   │   ├── __pycache__
+│   │   │   │   └── db_connection.cpython-312.pyc
+│   │   │   └── db_connection.py
+│   │   ├── fast_api.py
+│   │   ├── routes
+│   │   │   ├── __pycache__
+│   │   │   │   ├── agent_routes.cpython-312.pyc
+│   │   │   │   └── user_routes.cpython-312.pyc
+│   │   │   ├── agent_routes.py
+│   │   │   ├── github_routes.py
+│   │   │   └── user_routes.py
+│   │   ├── schema
+│   │   │   ├── __pycache__
+│   │   │   │   └── request_schema.cpython-312.pyc
+│   │   │   └── request_schema.py
+│   │   └── services
+│   │       ├── __pycache__
+│   │       │   ├── auth_service.cpython-312.pyc
+│   │       │   └── user_service.cpython-312.pyc
+│   │       ├── auth_service.py
+│   │       ├── github_service.py
+│   │       └── user_service.py
+│   └── langgraph_graphs
+│       ├── __pycache__
+│       │   ├── constants.cpython-312.pyc
+│       │   └── retrieval.cpython-312.pyc
+│       ├── constants.py
+│       ├── langgraph_agents
+│       │   ├── __pycache__
+│       │   │   ├── configuration.cpython-312.pyc
+│       │   │   └── utils.cpython-312.pyc
+│       │   ├── code_generation_graph
+│       │   │   ├── __init__.py
+│       │   │   ├── __pycache__
+│       │   │   │   ├── __init__.cpython-312.pyc
+│       │   │   │   ├── graph.cpython-312.pyc
+│       │   │   │   └── state.cpython-312.pyc
+│       │   │   ├── graph.py
+│       │   │   └── state.py
+│       │   ├── code_retrieval_graph
+│       │   │   ├── __pycache__
+│       │   │   │   ├── configuration.cpython-312.pyc
+│       │   │   │   └── prompts.cpython-312.pyc
+│       │   │   ├── configuration.py
+│       │   │   ├── graph.py
+│       │   │   ├── prompts.py
+│       │   │   ├── researcher_graph
+│       │   │   │   ├── __init__.py
+│       │   │   │   ├── __pycache__
+│       │   │   │   │   ├── __init__.cpython-312.pyc
+│       │   │   │   │   ├── configuration.cpython-312.pyc
+│       │   │   │   │   ├── graph.cpython-312.pyc
+│       │   │   │   │   └── state.cpython-312.pyc
+│       │   │   │   ├── configuration.py
+│       │   │   │   ├── graph.py
+│       │   │   │   └── state.py
+│       │   │   └── state.py
+│       │   ├── configuration.py
+│       │   ├── error_handling_graph
+│       │   │   ├── __pycache__
+│       │   │   │   ├── graph.cpython-312.pyc
+│       │   │   │   └── state.cpython-312.pyc
+│       │   │   ├── graph.py
+│       │   │   └── state.py
+│       │   └── utils.py
+│       └── retrieval.py
+├── logging_module
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-312.pyc
+│   │   └── logging_config.cpython-312.pyc
+│   └── logging_config.py
+├── poetry.lock
+├── pyproject.toml
+├── repo_structure.txt
+└── streamlit_frontend
+    ├── __pycache__
+    │   └── streamlit_app.cpython-312.pyc
+    ├── auth
+    │   ├── Login.py
+    │   ├── Logout.py
+    │   └── register.py
+    ├── features
+    │   ├── code_generation_page.py
+    │   ├── error_handling_page.py
+    │   ├── github_credentials_page.py
+    │   └── how_to_guide_page.py
+    ├── streamlit_app.py
+    └── utils
+        ├── api_helpers.py
+        ├── app_launcher.py
+        ├── chat_helpers.py
+        ├── chunk_processors.py
+        ├── github_credentials_updater.py
+        └── validate_fields.py
+```
 
 
 ## **How to run in your machine**
