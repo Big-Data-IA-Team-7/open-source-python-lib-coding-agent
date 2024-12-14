@@ -25,6 +25,18 @@ Unlock powerful capabilities that streamline your development process with intel
 
 ---
 
+# Tools and Technologies Used
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Snowflake](https://img.shields.io/badge/Snowflake-29B5E8?style=for-the-badge&logo=snowflake&logoColor=white)
+![Pinecone](https://img.shields.io/badge/Pinecone-005BBB?style=for-the-badge&logo=pinecone&logoColor=white)
+![LangGraph](https://img.shields.io/badge/LangGraph-017CEE?style=for-the-badge&logo=langchain&logoColor=white)
+![LangChain](https://img.shields.io/badge/LangChain-017CEE?style=for-the-badge&logo=langchain&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude-000000?style=for-the-badge&logo=anthropic&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 
 
 
@@ -74,6 +86,56 @@ flowchart TD
 
 ```
 
+
+
+
+## **How to run in your machine**
+
+Follow the steps below to clone the repository and set up the application components.
+
+### **Clone the Repository**
+```bash
+git clone <repository_url>
+cd <repository_directory>
+```
+
+## Commands for Setting up Airflow
+
+```bash
+### Navigate to the Airflow directory
+cd airflow
+
+### Create a `.env` file
+OPENAI_API_KEY='sk-proj-******'
+
+### Build the Docker image
+docker build -t ramkumarrp16077/airflow-open-source:latest .
+
+### Run the Docker container
+docker run -d -p 8080:8080 ramkumarrp16077/airflow-open-source:latest
+```
+### Access Airflow
+http://localhost:8080
+
+---
+
+## Commands for Setting up Streamlit & FastAPI
+
+### Navigate to the project root directory
+cd ..
+
+### Create a `.env` file
+OPENAI_API_KEY='sk-proj-******'
+```bash
+### Build the Docker image
+docker build -t ramkumarrp16077/open-source-python:latest .
+
+### Run the Docker container
+docker run -d -p 8501:8501 -p 8000:8000 ramkumarrp16077/open-source-python:latest
+```
+### Access the applications
+- **Streamlit:** http://localhost:8501
+- **FastAPI (Swagger Documentation):** http://localhost:8000/docs
 
 
 ## Contributors
