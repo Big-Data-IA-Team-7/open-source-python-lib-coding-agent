@@ -3,6 +3,31 @@
 ## Overview  
 This project simplifies the multi-step process of working with Python libraries by leveraging LLM-powered agents. It integrates key functionalities like code generation, API references, error handling, and web search to provide a seamless, natural language-based interface for developers and learners.  
 
+## Project Resources
+
+
+### Links to the project resources:
+- **Google Codelab**: [Codelab Link](https://codelabs-preview.appspot.com/?file_id=1cqfyDQM7pk3ZdG-ojvqj4_wscrx7qn1oA3dZL50mL0I#0)
+- **Streamlit App** (Deployed on AWS EC2): [Streamlit Link](http://75.101.133.31:8501/)
+- **Airflow** (Deployed on AWS EC2): [Airflow Link](http://75.101.133.31:8080/)
+- **YouTube Demo**: [Demo Link]()
+
+---
+
+## Key Features
+
+Unlock powerful capabilities that streamline your development process with intelligent repository management and interactive learning experiences.
+
+- **Smart Repository Integration**: Upload and access any Python library instantly.
+- **Interactive Learning**: Custom installation guides and tutorials.
+- **Code Generation & API Mastery**: Ready-to-use code snippets.
+- **Error Resolution**: Expert solutions and references.
+
+---
+
+
+
+
 ## Proposal and Documentation  
 For detailed information about the project's scope, objectives, and architecture, refer to the project proposal on **Google Codelab**: [Project Proposal Link](https://codelabs-preview.appspot.com/?file_id=1cqfyDQM7pk3ZdG-ojvqj4_wscrx7qn1oA3dZL50mL0I#0)
 
@@ -48,3 +73,23 @@ flowchart TD
 
 
 ```
+
+
+
+## Contributors
+
+
+The contributions from the team members are detailed below:
+
+| Name                         | Contribution                                                                                  |
+|------------------------------|----------------------------------------------------------------------------------------------|
+| **Pragnesh Anekal**          | 33% - Github Data Parsing, Front end Streamlit, FastAPI, Langgraph Setup, Code Retreival Agent, Code Generation Agent |
+| **Ram Kumar Ramasamy Pandiaraj** | 33% - Scraping Documentation, Airflow, Setting up snowflake, Code Generation Agent, Github POC, Tavilly POC, Deployment              |
+| **Dipen Manoj Patel**        | 33% - Streamlit Frontend, Web Search Agent using SerpAPI,  Github MD Parsing, GitHub Push, CI/CD Pipelines   |
+
+---
+
+## Attestation
+
+We attest that we haven’t used any other students' work in our assignment and abide by the policies listed in the student handbook.
+

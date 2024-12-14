@@ -108,6 +108,11 @@ jobs:
               -p 8506:8506 -p 8507:8507 \
               -p 8508:8508 -p 8509:8509 \
               -p 8510:8510  \
+              -p 8511:8511 -p 8512:8512 \
+              -p 8513:8513 -p 8514:8514 \
+              -p 8515:8515 -p 8520:8520 \
+              -p 8516:8516 -p 8517:8517 \
+              -p 8518:8518 -p 8519:8519 \
               -e ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" \
               -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
               -e AWS_S3_BUCKET_NAME="${{ secrets.AWS_S3_BUCKET_NAME }}" \
